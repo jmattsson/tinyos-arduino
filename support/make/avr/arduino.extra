@@ -1,0 +1,19 @@
+#-*-Makefile-*- vim:syntax=make
+
+ifeq ($(ARDUINO),)
+$(error ARDUINO must be defined, try "make $(TARGETS) help")
+endif
+
+ifeq ($(PROGRAMMER),avrdude)
+    PROGRAMMER_FLAGS = -carduino -P$(ARDUINO) $(PROGRAMMER_PART) $(PROGRAMMER_EXTRA_FLAGS) $(PROGRAMMER_EXTRA_FLAGS_ARDUINO)
+    PROGRAMMER_INSTALL_SREC_FLAGS = -U flash:w:$(INSTALL_SREC):a
+endif
+
+ifeq ($(PROGRAMMER),uisp)
+    $(error uisp is not supported, please use avrdude")
+endif
+
+program: FORCE
+	@echo "    installing $(PLATFORM) binary using arduino bootloader"
+	$(PROGRAMMER) $(PROGRAMMER_FLAGS) $(PROGRAMMER_INSTALL_SREC_FLAGS)
+

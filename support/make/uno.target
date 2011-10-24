@@ -1,0 +1,21 @@
+PLATFORM=uno
+
+PROGRAMMER?= avrdude
+ARDUINO?= /dev/ttyACM0
+DEFAULT_PROGRAM_AVR=arduino
+
+ifeq ($(PROGRAMMER),avrdude)
+  PROGRAMMER_PART ?= -pm328p
+endif
+
+# can't set fuses when using arduino mode?
+#AVR_FUSE_H?= 0xDE
+# or use 0xD6?
+#AVR_FUSE_L?= 0xFF
+#AVR_FUSE_E?= 0x05
+
+$(call TOSMake_include_platform,avr)
+
+uno: $(BUILD_DEPS)
+    @:
+

@@ -1,0 +1,32 @@
+#ifndef _ATM328PHARDWARE_H_
+#define _ATM328PHARDWARE_H_
+
+#include <avr/io.h>
+#include <avr/interrupt.h>
+
+typedef uint8_t __nesc_atomic_t;
+
+inline void __nesc_enable_interrupt() {
+     sei ();
+}
+
+inline void __nesc_disable_interrupt() {
+    cli ();
+}
+
+
+inline __nesc_atomic_t __nesc_atomic_start ()
+{
+    __nesc_atomic_t result = SREG;
+    __nesc_disable_interrupt ();
+    asm volatile ("" : : : "memory");
+    return result;
+}
+
+inline void __nesc_atomic_end (__nesc_atomic_t old_SREG)
+{
+    SREG = old_SREG;
+    asm volatile ("" : : : "memory");
+}
+
+#endif
