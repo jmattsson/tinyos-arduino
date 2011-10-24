@@ -1,9 +1,8 @@
-module PlatformC {
+configuration PlatformC {
   provides interface Init;
 }
 implementation {
-  command error_t Init.init() {
-    return SUCCESS;
-  }
+  components PlatformP;
+  Init = PlatformP.Init;
 }
 
