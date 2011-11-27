@@ -1,3 +1,5 @@
+#include <avr/sleep.h>
+
 module McuSleepC {
   provides {
     interface McuSleep;
@@ -7,7 +9,7 @@ module McuSleepC {
 implementation {
   async command void McuSleep.sleep() {
     sei ();
-    asm volatile ("sleep" : : : "memory");
+    sleep_mode ();
     cli ();
   }
 
