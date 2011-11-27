@@ -29,6 +29,12 @@ inline void __nesc_atomic_end (__nesc_atomic_t old_SREG)
     asm volatile ("" : : : "memory");
 }
 
+#define AVR_ATOMIC_HANDLER(signame) \
+    void signame () __attribute__((signal)) @atomic_hwevent() @C()
+
+#define AVR_NONATOMIC_HANDLER(signame) \
+    void signame () __attribute__((interrupt)) @hwevent() @C()
+
 #define SFR_BIT_SET(reg, bit) \
     asm ("sbi %0, %1" : : "I" (reg - __SFR_OFFSET), "I" (bit) )
 
@@ -37,5 +43,7 @@ inline void __nesc_atomic_end (__nesc_atomic_t old_SREG)
 
 #define SFR_BIT_READ(reg, bit) \
     ((*((uint8_t *)(reg - __SFR_OFFSET)) & _BV(bit)) != 0)
+
+typedef struct {} T64khz;
 
 #endif
