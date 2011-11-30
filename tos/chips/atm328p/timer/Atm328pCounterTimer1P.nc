@@ -1,6 +1,7 @@
-module Counter64khz16P
+// FIXME - make this a generic component
+module Atm328pCounterTimer1P
 {
-    provides interface Counter<T64khz, uint16_t> as Counter;
+    provides interface Counter<ATM328P_TIMER_1_PRECISION_TYPE, uint16_t> as Counter;
     uses interface HplAtm328pTimer<uint16_t> as Timer;
 }
 implementation

@@ -1,9 +1,8 @@
-#include "Atm328pTimerClockSource.h"
+#include <Atm328pTimerConfig.h>
 module HplAtm328pTimer1P
 {
     provides interface HplAtm328pTimer<uint16_t> as Timer;
     provides interface Init as PlatformInit;
-    uses interface Atm328pTimerClockSource as Config;
 }
 implementation
 {
@@ -54,7 +53,7 @@ implementation
         TIMSK1 |= (1 << TOIE1);
 
         // enable the chosen clock source
-        TCCR1B |= (call Config.get64khzSource () << CS10);
+        TCCR1B |= (ATM328P_TIMER_1_CLOCK << CS10);
     }
 
 

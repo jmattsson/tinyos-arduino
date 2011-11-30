@@ -4,9 +4,7 @@ configuration HplAtm328pTimer1C
 }
 implementation
 {
-  components HplAtm328pTimer1P, PlatformTimersC, RealMainP;
-
-  HplAtm328pTimer1P.Config -> PlatformTimersC;
+  components HplAtm328pTimer1P, RealMainP;
   HplAtm328pTimer1P.PlatformInit <- RealMainP.PlatformInit;
 
   Timer1 = HplAtm328pTimer1P;

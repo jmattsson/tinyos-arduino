@@ -1,6 +1,7 @@
 push( @includes, qw(
 
-  %T/platforms/unu
+  %T/platforms/uno
+  %T/platforms/uno/chips/atm328p/timer
   %T/chips/atm328p
   %T/chips/atm328p/adc
   %T/chips/atm328p/pins
