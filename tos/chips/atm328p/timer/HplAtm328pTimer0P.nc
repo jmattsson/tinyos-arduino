@@ -1,28 +1,28 @@
 #include <Atm328pTimerConfig.h>
-module HplAtm328pTimer1P
+module HplAtm328pTimer0P
 {
-    provides interface HplAtm328pTimer<uint16_t> as Timer;
+    provides interface HplAtm328pTimer<uint8_t> as Timer;
     provides interface Init as PlatformInit;
 }
 implementation
 {
-    #define CLOCK_SOURCE_TIMER_1_gm (0x07 << CS10)
+    #define CLOCK_SOURCE_TIMER_0_gm (0x07 << CS00)
 
-    AVR_NONATOMIC_HANDLER(TIMER1_OVF_vect)
+    AVR_NONATOMIC_HANDLER(TIMER0_OVF_vect)
     {
         signal Timer.overflow ();
     }
 
 
-    async command uint16_t Timer.get ()
+    async command uint8_t Timer.get ()
     {
-        return TCNT1;
+        return TCNT0;
     }
 
 
-    async command void Timer.set (uint16_t val)
+    async command void Timer.set (uint8_t val)
     {
-        TCNT1 = val;
+        TCNT0 = val;
     }
 
 
@@ -31,36 +31,38 @@ implementation
 
     async command bool Timer.test ()
     {
-        return TIFR1 & (1 << TOV1);
+        return TIFR0 & (1 << TOV0);
     }
 
 
     async command void Timer.clear ()
     {
-        TIFR1 |= (1 << TOV1);
+        TIFR0 |= (1 << TOV0);
     }
 
 
     async command void Timer.start ()
     {
+        // TODO: check if need to clear PRTIM0 bit to enable the timer
+
         // clear clock source
-        TCCR1B &= ~CLOCK_SOURCE_TIMER_1_gm;
+        TCCR0B &= ~CLOCK_SOURCE_TIMER_0_gm;
 
         // reset value
         call Timer.set (0);
 
         // enable overflow interrupts
-        TIMSK1 |= (1 << TOIE1);
+        TIMSK0 |= (1 << TOIE1);
 
         // enable the chosen clock source
-        TCCR1B |= (ATM328P_TIMER_1_CLOCK << CS10);
+        TCCR0B |= (ATM328P_TIMER_0_CLOCK << CS00);
     }
 
 
     async command void Timer.stop ()
     {
         // clear clock source
-        TCCR1B &= ~CLOCK_SOURCE_TIMER_1_gm;
+        TCCR0B &= ~CLOCK_SOURCE_TIMER_0_gm;
     }
 
     command error_t PlatformInit.init ()

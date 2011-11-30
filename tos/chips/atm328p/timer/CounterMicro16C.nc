@@ -7,7 +7,7 @@ implementation
 {
   components Atm328pCounterTimer1C;
 
-#if ATM328P_TIMER_1_DOWNSCALE == 0
+#if ATM328P_TIMER_1_MICRO_DOWNSCALE == 0
 
   /* The prescaler can get us right onto micro second precision. */
   Counter = Atm328pCounterTimer1C;

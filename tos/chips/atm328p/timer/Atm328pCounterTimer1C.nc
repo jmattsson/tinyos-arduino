@@ -5,8 +5,11 @@ configuration Atm328pCounterTimer1C
 }
 implementation
 {
-    components Atm328pCounterTimer1P, HplAtm328pTimer1C as HplTimer;
-    Atm328pCounterTimer1P.Timer -> HplTimer;
+    components
+        new Atm328pTimerToCounter(ATM328P_TIMER_1_PRECISION_TYPE, uint16_t),
+        HplAtm328pTimer1C as HplTimer;
 
-    Counter = Atm328pCounterTimer1P;
+    Atm328pTimerToCounter.Timer -> HplTimer;
+
+    Counter = Atm328pTimerToCounter;
 }

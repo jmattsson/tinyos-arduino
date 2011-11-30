@@ -1,12 +1,11 @@
-// FIXME - make this a generic component
-module Atm328pCounterTimer1P
+generic module Atm328pTimerToCounter (typedef precision_type, typedef size_type)
 {
-    provides interface Counter<ATM328P_TIMER_1_PRECISION_TYPE, uint16_t> as Counter;
-    uses interface HplAtm328pTimer<uint16_t> as Timer;
+    provides interface Counter<precision_type, size_type> as Counter;
+    uses interface HplAtm328pTimer<size_type> as Timer;
 }
 implementation
 {
-    async command uint16_t Counter.get ()
+    async command size_type Counter.get ()
     {
         return call Timer.get ();
     }
