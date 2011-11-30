@@ -10,8 +10,11 @@ configuration PlatformLedsC
 }
 implementation
 {
-  components HplAtm328pGeneralIOC as Gpio, new NoPinC();
-  Led0 = Gpio.PortB5;
+  components HplAtm328pGeneralIOC as Gpio,
+    new InvertedIOC () as Inv0, new NoPinC();
+  Inv0.SubIO -> Gpio.PortB5;
+
+  Led0 = Inv0;
   Led1 = NoPinC;
   Led2 = NoPinC;
 
