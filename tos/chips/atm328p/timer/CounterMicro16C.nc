@@ -17,7 +17,7 @@ implementation
   /* The prescaler does not have the correct divisor. Apply a transform. */
   components new TransformCounterC (
     TMicro, uint16_t,
-    ATM328P_TIMER_1_PRECISION_TYPE, uint16_t, ATM328P_TIMER_1_DOWNSCALE,
+    ATM328P_TIMER_1_PRECISION_TYPE, uint16_t, ATM328P_TIMER_1_MICRO_DOWNSCALE,
     uint8_t) as Transform;
   Transform.CounterFrom -> Atm328pCounterTimer1C;
 
