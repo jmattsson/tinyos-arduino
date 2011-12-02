@@ -70,9 +70,7 @@ implementation
        */
       dt += call Alarm.getNow () + 1 + MIN_DELAY;
 
-      // FIXME - need to support 16bit regs too!
-
-      *(uint8_t *)OCREG = dt;
+      *(size_type *)OCREG = dt;
       *(uint8_t *)TIMSKREG |= TIMSK_BIT; /* enable compare interrupt */
     }
   }
