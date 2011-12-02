@@ -34,6 +34,7 @@ implementation
   {
     atomic {
       size_type now;
+      size_type next = t0 + dt;
 
       *(uint8_t *)TIFREG |= TIFREG_BIT; /* clear compare interrupt flag */
 
@@ -42,7 +43,15 @@ implementation
       /* t0 is always assumed to be in the past */
       if (t0 > now)
       {
-        if ((t0 + dt) > now)
+        if ((next >= t0) || (next <= now))
+        {
+          dt = 0;
+          goto doit; /* wanted alarm some time in the past */
+        }
+      }
+      else
+      {
+        if ((next >= t0) && (next <= now))
         {
           dt = 0;
           goto doit; /* wanted alarm some time in the past */
@@ -50,7 +59,7 @@ implementation
       }
 
       /* make the delta-t relative to current counter time */
-      dt = (t0 + dt) - now;
+      dt = next - now;
 
     doit:
       /* It's not possible to match on the very next counter value, so need

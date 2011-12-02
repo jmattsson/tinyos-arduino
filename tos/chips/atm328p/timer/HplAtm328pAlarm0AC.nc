@@ -11,7 +11,7 @@ implementation
     (uint8_t)&OCR0A, (uint8_t)&TCNT0,
     (uint8_t)&TIMSK0, (1 << OCIE0A),
     (uint8_t)&TIFR0, (1 << OCF0A),
-    0) as Alarm0A;
+    1) as Alarm0A;
 
   components HplAtm328pAlarmIsr0AP as Isr;
   Alarm0A.Isr -> Isr;
