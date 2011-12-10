@@ -9,4 +9,6 @@ implementation
   {
     signal HplAtm328pAlarmIsr.fired ();
   }
+
+  default async event void HplAtm328pAlarmIsr.fired () {}
 }

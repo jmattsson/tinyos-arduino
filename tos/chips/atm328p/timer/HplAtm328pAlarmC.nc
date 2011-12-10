@@ -1,4 +1,4 @@
-generic module HplAtm328pAlarmC(typedef precision_tag, typedef size_type @integer(), uint8_t OCREG, uint8_t CNTREG, uint8_t TIMSKREG, uint8_t TIMSK_BIT, uint8_t TIFREG, uint8_t TIFREG_BIT, uint16_t MIN_DELAY)
+generic module HplAtm328pAlarmC(typedef precision_tag, typedef size_type @integer(), uint8_t OCREG, uint8_t CNTREG, uint8_t TIMSKREG, uint8_t TIMSK_BIT, uint8_t TIFREG, uint8_t TIFREG_BIT, uint16_t MIN_DELTA_T)
 {
   provides interface Alarm<precision_tag, size_type>;
   uses interface HplAtm328pAlarmIsr as Isr;
@@ -9,15 +9,13 @@ implementation
 
   async event void Isr.fired ()
   {
+    call Alarm.stop ();
     signal Alarm.fired ();
   }
 
   async command void Alarm.start (size_type dt)
   {
-    atomic {
-      m_t0 = call Alarm.getNow ();
-      call Alarm.startAt (m_t0, dt);
-    }
+    atomic call Alarm.startAt (call Alarm.getNow (), dt);
   }
 
   async command void Alarm.stop ()
@@ -27,7 +25,7 @@ implementation
 
   async command bool Alarm.isRunning ()
   {
-    return SFR_BIT_READ(TIMSKREG, TIMSK_BIT);
+    return *(uint8_t *)TIMSKREG & TIMSK_BIT;
   }
 
   async command void Alarm.startAt (size_type t0, size_type dt)
@@ -36,8 +34,7 @@ implementation
       size_type now;
       size_type next = t0 + dt;
 
-      *(uint8_t *)TIFREG |= TIFREG_BIT; /* clear compare interrupt flag */
-
+      m_t0 = t0;
       now = call Alarm.getNow ();
 
       /* t0 is always assumed to be in the past */
@@ -66,11 +63,13 @@ implementation
        * to bump by at least one. For high-frequency counters, we might also
        * need to add a few extra cycles to avoid missing the match while doing
        * these calculations. Check the assembler output to work out what the
-       * appropriate value for MIN_DELAY should be for the particular instance.
+       * appropriate value for MIN_DELTA_T should be for the particular
+       * instance.
        */
-      dt += call Alarm.getNow () + 1 + MIN_DELAY;
+      dt += call Alarm.getNow () + 1 + MIN_DELTA_T;
 
       *(size_type *)OCREG = dt;
+      *(uint8_t *)TIFREG |= TIFREG_BIT; /* clear compare interrupt flag */
       *(uint8_t *)TIMSKREG |= TIMSK_BIT; /* enable compare interrupt */
     }
   }
@@ -84,4 +83,6 @@ implementation
   {
     atomic return m_t0;
   }
+
+  default async event void Alarm.fired () {}
 }
