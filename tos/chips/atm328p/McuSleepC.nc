@@ -10,6 +10,7 @@ implementation {
   async command void McuSleep.sleep() {
     sei ();
     sleep_mode ();
+    asm ("" : : : "memory");
     cli ();
   }
 
