@@ -1,5 +1,5 @@
 #include <Atm328pTimerConfig.h>
-configuration CounterMicro16C
+configuration CounterMicro32C
 {
   provides interface Counter<TMicro, uint32_t>;
 }
