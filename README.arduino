@@ -1,0 +1,7 @@
+This is very much a Work In Progress, and it's most definitely not feature
+complete. See the project wiki on github for actual progress/status.
+
+Unless otherwise noted, all arduino related source is copyright me (Johny
+Mattsson), and placed under the new BSD license, same as the rest of the
+TinyOS source. It's on my to-do list to actually add the copyright header
+to all the files...
