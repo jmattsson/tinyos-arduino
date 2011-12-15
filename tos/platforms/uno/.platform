@@ -20,6 +20,7 @@ push( @includes, qw(
   -mmcu=atmega328p
   -fnesc-target=avr
   -fnesc-no-debug
+  -DF_CPU=16000000UL
 
 );
 
