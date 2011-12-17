@@ -31,8 +31,7 @@ implementation
       " nop\n\t"              /* 1 cycle  */
 
       " brbc 1,1b\n\t"     /* 2 cycles if not zero, else 1 cycle */
-      :
-      : "w" (us)
+      : "+w" (us)
     );
   }
 }
