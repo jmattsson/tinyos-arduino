@@ -167,17 +167,17 @@ implementation
     }
   }
 
-  AVR_NONATOMIC_HANDLER(USART_RX_vect)
+  AVR_ATOMIC_HANDLER(USART_RX_vect)
   {
     signal Usart.rxDone ();
   }
 
-  AVR_NONATOMIC_HANDLER(USART_UDRE_vect)
+  AVR_ATOMIC_HANDLER(USART_UDRE_vect)
   {
     signal Usart.txNowEmpty ();
   }
 
-  AVR_NONATOMIC_HANDLER(USART_TX_vect)
+  AVR_ATOMIC_HANDLER(USART_TX_vect)
   {
     signal Usart.txDone ();
   }

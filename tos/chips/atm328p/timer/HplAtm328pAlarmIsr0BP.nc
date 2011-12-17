@@ -5,7 +5,7 @@ module HplAtm328pAlarmIsr0BP
 }
 implementation
 {
-  AVR_NONATOMIC_HANDLER(TIMER0_COMPB_vect)
+  AVR_ATOMIC_HANDLER(TIMER0_COMPB_vect)
   {
     signal HplAtm328pAlarmIsr.fired ();
   }

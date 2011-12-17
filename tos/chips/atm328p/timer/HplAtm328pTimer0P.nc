@@ -8,7 +8,7 @@ implementation
 {
     #define CLOCK_SOURCE_TIMER_0_gm (0x07 << CS00)
 
-    AVR_NONATOMIC_HANDLER(TIMER0_OVF_vect)
+    AVR_ATOMIC_HANDLER(TIMER0_OVF_vect)
     {
         signal Timer.overflow ();
     }

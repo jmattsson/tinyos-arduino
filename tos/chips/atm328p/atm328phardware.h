@@ -32,8 +32,13 @@ inline void __nesc_atomic_end (__nesc_atomic_t old_SREG)
 #define AVR_ATOMIC_HANDLER(signame) \
     void signame () __attribute__((signal)) @atomic_hwevent() @C()
 
+/* Hmm, the atm328p doesn't have support for interrupt priorities, so allowing
+ * nested interrupts would open up the potential for very easy stack overflows.
+ * For now, it seems best not to support the notion of nested interrupts.
+ *
 #define AVR_NONATOMIC_HANDLER(signame) \
     void signame () __attribute__((interrupt)) @hwevent() @C()
+ */
 
 #define SFR_BIT_SET(reg, bit) \
     asm ("sbi %0, %1" : : "I" (reg - __SFR_OFFSET), "I" (bit) )
