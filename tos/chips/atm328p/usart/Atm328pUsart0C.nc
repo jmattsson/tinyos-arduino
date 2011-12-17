@@ -1,8 +1,12 @@
 configuration Atm328pUsart0C
 {
-  provides interface StdControl;
-  provides interface UartStream;
-  provides interface UartByte;
+  provides
+  {
+    interface StdControl;
+    interface UartStream;
+    interface UartByte;
+    interface SerialFlush;
+  }
 
   uses interface BusyWait<TMicro, uint16_t>;
   uses interface Atm328pUsartConfig;
@@ -14,6 +18,7 @@ implementation
   StdControl = Atm328pUsartP;
   UartStream = Atm328pUsartP;
   UartByte = Atm328pUsartP;
+  SerialFlush = Atm328pUsartP;
 
   BusyWait = Atm328pUsartP;
   Atm328pUsartConfig = Atm328pUsartP;

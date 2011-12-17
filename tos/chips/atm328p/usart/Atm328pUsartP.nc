@@ -5,6 +5,7 @@ generic module Atm328pUsartP()
     interface StdControl;
     interface UartStream;
     interface UartByte;
+    interface SerialFlush;
   }
   uses
   {
@@ -18,6 +19,8 @@ generic module Atm328pUsartP()
 }
 implementation
 {
+  bool notify_flush = FALSE;
+
   command error_t StdControl.start ()
   {
     error_t res;
@@ -123,6 +126,17 @@ implementation
     return SUCCESS;
   }
 
+  task void do_notify_flush ()
+  {
+    signal SerialFlush.flushDone ();
+  }
+
+  command void SerialFlush.flush ()
+  {
+    atomic notify_flush = TRUE;
+  }
+
+  default event void SerialFlush.flushDone () {}
 
   async event void HplUsart.rxDone ()
   {
@@ -130,6 +144,13 @@ implementation
 
   async event void HplUsart.txDone ()
   {
+    atomic {
+      if (notify_flush && call HplUsart.txEmpty ())
+      {
+        notify_flush = FALSE;
+        post do_notify_flush ();
+      }
+    }
   }
 
   async event void HplUsart.txNowEmpty ()
