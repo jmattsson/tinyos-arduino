@@ -19,10 +19,10 @@ interface HplAtm328pUsart
   async command bool rxBit8 ();
   async command uint8_t rx ();
 
-  async command void txBit8 (bool bit)
+  async command void txBit8 (bool bit);
   async command void tx (uint8_t data);
 
   async event void rxDone ();
   async event void txDone ();
-  async event void txEmpty ();
+  async event void txNowEmpty ();
 }

@@ -8,6 +8,7 @@ push( @includes, qw(
   %T/chips/atm328p/spi
   %T/chips/atm328p/i2c
   %T/chips/atm328p/timer
+  %T/chips/atm328p/usart
   %T/lib/timer
   %T/lib/serial
   %T/lib/power

@@ -7,14 +7,14 @@ module HplAtm328pUsartP
     interface Init;
     interface StdControl as RxControl;
     interface StdControl as TxControl;
-    interface Atm328pUsart as Usart;
+    interface HplAtm328pUsart as Usart;
   }
-  uses interface HplAtm328pUsartConfig as Config;
+  uses interface Atm328pUsartConfig as Config;
 }
 implementation
 {
   // NOTE: need to always write FE0/DOR0/UPE0 to zero when writing to UCSR0A
-  enum { UCSR0A_WMASK = ((1 << FE0) | (1 << DOR0) | (1 << UPE0)) };
+  enum { UCSR0A_WMASK = ~((1 << FE0) | (1 << DOR0) | (1 << UPE0)) };
 
   command error_t Init.init ()
   {
@@ -153,9 +153,9 @@ implementation
     return UDR0;
   }
 
-  async command void Usart.txBit8 ()
+  async command void Usart.txBit8 (bool bit)
   {
-    UCSR0B |= (1 << TXB80);
+    UCSR0B |= ((bit ? 1 : 0) << TXB80);
   }
 
   async command void Usart.tx (uint8_t data)
@@ -174,7 +174,7 @@ implementation
 
   AVR_NONATOMIC_HANDLER(USART_UDRE_vect)
   {
-    signal Usart.txEmpty ();
+    signal Usart.txNowEmpty ();
   }
 
   AVR_NONATOMIC_HANDLER(USART_TX_vect)

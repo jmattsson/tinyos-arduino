@@ -2,5 +2,5 @@
 
 interface Atm328pUsartConfig
 {
-  command atm328p_usart_config_t *getConfig ();
+  async command atm328p_usart_config_t *getConfig ();
 }
