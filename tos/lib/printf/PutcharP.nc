@@ -84,7 +84,7 @@
 #endif
 #undef putchar
 
-#ifdef _H_atmega128hardware_H
+#if defined(_H_atmega128hardware_H) || defined (_H_atm328phardware_h)
 static int uart_putchar(char c, FILE *stream);
 static FILE atm128_stdout = 
 	FDEV_SETUP_STREAM(TCAST(int (*)(char c, FILE *stream), uart_putchar), 
@@ -98,7 +98,7 @@ module PutcharP {
 
   command error_t Init.init() {
       error_t rv = SUCCESS;
-#ifdef _H_atmega128hardware_H
+#if defined(_H_atmega128hardware_H) || defined(_H_atm328phardware_h)
       stdout = &atm128_stdout;
 #endif
       return rv;
@@ -107,7 +107,7 @@ module PutcharP {
 #ifdef _H_msp430hardware_h
   int putchar(int c) __attribute__((noinline)) @C() @spontaneous() {
 #else
-#ifdef _H_atmega128hardware_H
+#if defined(_H_atmega128hardware_H) || defined(_H_atm328phardware_h)
   int uart_putchar(char c, FILE *stream) __attribute__((noinline)) @C() @spontaneous() {
 #else
 #ifdef __M16C60HARDWARE_H__
