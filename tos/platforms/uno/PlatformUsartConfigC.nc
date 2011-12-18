@@ -11,7 +11,7 @@ implementation
     parity:               ATM328P_USART_PARITY_NONE,
     two_stop_bits:        FALSE,
     polarity_rising_edge: FALSE,
-    double_speed:         FALSE,
+    double_speed:         TRUE,
     baud:                 115200ul,
   };
 
