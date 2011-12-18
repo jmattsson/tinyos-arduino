@@ -72,7 +72,8 @@
  * @author Peter A. Bigot <pabigot@users.sourceforge.net>
  */
 
-#if defined (_H_msp430hardware_h) || defined (_H_atmega128hardware_H)
+#if defined (_H_msp430hardware_h) || defined (_H_atmega128hardware_H) || \
+    defined (_H_atm328phardware_h)
   #include <stdio.h>
 #else
 #ifdef __M16C60HARDWARE_H__ 

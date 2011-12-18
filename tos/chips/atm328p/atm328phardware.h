@@ -1,5 +1,5 @@
-#ifndef _ATM328PHARDWARE_H_
-#define _ATM328PHARDWARE_H_
+#ifndef _H_atm328phardware_h
+#define _H_atm328phardware_h
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
