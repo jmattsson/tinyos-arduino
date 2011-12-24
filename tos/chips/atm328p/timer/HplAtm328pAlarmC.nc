@@ -1,88 +1,30 @@
-generic module HplAtm328pAlarmC(typedef precision_tag, typedef size_type @integer(), uint8_t OCREG, uint8_t CNTREG, uint8_t TIMSKREG, uint8_t TIMSK_BIT, uint8_t TIFREG, uint8_t TIFREG_BIT, uint16_t MIN_DELTA_T)
+generic module HplAtm328pAlarmC(typedef precision_tag, typedef size_type @integer(), uint8_t OCREG, uint8_t CNTREG, uint8_t TIMSKREG, uint8_t TIMSK_BIT, uint8_t TIFREG, uint8_t TIFREG_BIT)
 {
-  provides interface Alarm<precision_tag, size_type>;
-  uses interface HplAtm328pAlarmIsr as Isr;
+  provides interface HplAtm328pAlarm<precision_tag, size_type>;
 }
 implementation
 {
-  size_type m_t0;
-
-  async event void Isr.fired ()
-  {
-    call Alarm.stop ();
-    signal Alarm.fired ();
-  }
-
-  async command void Alarm.start (size_type dt)
-  {
-    atomic call Alarm.startAt (call Alarm.getNow (), dt);
-  }
-
-  async command void Alarm.stop ()
-  {
-    *(uint8_t *)TIMSKREG &= ~TIMSK_BIT; /* disable compare interrupt */
-  }
-
-  async command bool Alarm.isRunning ()
-  {
-    return *(uint8_t *)TIMSKREG & TIMSK_BIT;
-  }
-
-  async command void Alarm.startAt (size_type t0, size_type dt)
+  async command void HplAtm328pAlarm.start (size_type t)
   {
     atomic {
-      size_type now;
-      size_type next = t0 + dt;
-
-      m_t0 = t0;
-      now = call Alarm.getNow ();
-
-      /* t0 is always assumed to be in the past */
-      if (t0 > now)
-      {
-        if ((next >= t0) || (next <= now))
-        {
-          dt = 0;
-          goto doit; /* wanted alarm some time in the past */
-        }
-      }
-      else
-      {
-        if ((next >= t0) && (next <= now))
-        {
-          dt = 0;
-          goto doit; /* wanted alarm some time in the past */
-        }
-      }
-
-      /* make the delta-t relative to current counter time */
-      dt = next - now;
-
-    doit:
-      /* It's not possible to match on the very next counter value, so need
-       * to bump by at least one. For high-frequency counters, we might also
-       * need to add a few extra cycles to avoid missing the match while doing
-       * these calculations. Check the assembler output to work out what the
-       * appropriate value for MIN_DELTA_T should be for the particular
-       * instance.
-       */
-      dt += call Alarm.getNow () + 1 + MIN_DELTA_T;
-
-      *(size_type *)OCREG = dt;
+      *(size_type *)OCREG = t;
       *(uint8_t *)TIFREG |= TIFREG_BIT; /* clear compare interrupt flag */
       *(uint8_t *)TIMSKREG |= TIMSK_BIT; /* enable compare interrupt */
     }
   }
 
-  async command size_type Alarm.getNow ()
+  async command void HplAtm328pAlarm.stop ()
+  {
+    *(uint8_t *)TIMSKREG &= ~TIMSK_BIT; /* disable compare interrupt */
+  }
+
+  async command bool HplAtm328pAlarm.isRunning ()
+  {
+    return *(uint8_t *)TIMSKREG & TIMSK_BIT;
+  }
+
+  async command size_type HplAtm328pAlarm.now ()
   {
     atomic return CNTREG;
   }
-
-  async command size_type Alarm.getAlarm ()
-  {
-    atomic return m_t0;
-  }
-
-  default async event void Alarm.fired () {}
 }
