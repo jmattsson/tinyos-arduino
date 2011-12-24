@@ -10,14 +10,14 @@ configuration PlatformSerialC
 }
 implementation
 {
-  components Atm328pUsart0C as Usart0;
+  components Atm328pUsartC as Usart;
   
-  StdControl  = Usart0;
-  UartStream  = Usart0;
-  UartByte    = Usart0;
-  SerialFlush = Usart0;
+  StdControl  = Usart;
+  UartStream  = Usart;
+  UartByte    = Usart;
+  SerialFlush = Usart;
 
   components BusyWaitMicroC, PlatformUsartConfigC;
-  Usart0.BusyWait -> BusyWaitMicroC;
-  Usart0.Atm328pUsartConfig -> PlatformUsartConfigC;
+  Usart.BusyWait -> BusyWaitMicroC;
+  Usart.Atm328pUsartConfig -> PlatformUsartConfigC;
 }

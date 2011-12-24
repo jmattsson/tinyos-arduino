@@ -1,4 +1,4 @@
-generic module Atm328pUsartP()
+module Atm328pUsartP
 {
   provides
   {
