@@ -1,0 +1,31 @@
+#include <Atm328pTimerConfig.h>
+configuration HplAtm328pAlarms0C
+{
+  provides interface Alarm<ATM328P_TIMER_0_PRECISION_TYPE, uint8_t> as AlarmA;
+  provides interface Alarm<ATM328P_TIMER_0_PRECISION_TYPE, uint8_t> as AlarmB;
+}
+implementation
+{
+  components new HplAtm328pAlarmC (
+    ATM328P_TIMER_0_PRECISION_TYPE,
+    uint8_t,
+    (uint8_t)&OCR0A, (uint8_t)&TCNT0,
+    (uint8_t)&TIMSK0, (1 << OCIE0A),
+    (uint8_t)&TIFR0, (1 << OCF0A),
+    1) as Alarm0A;
+
+  components new HplAtm328pAlarmC (
+    ATM328P_TIMER_0_PRECISION_TYPE,
+    uint8_t,
+    (uint8_t)&OCR0B, (uint8_t)&TCNT0,
+    (uint8_t)&TIMSK0, (1 << OCIE0B),
+    (uint8_t)&TIFR0, (1 << OCF0B),
+    1) as Alarm0B;
+
+  components HplAtm328pAlarmIsr0P as Interrupts;
+  Alarm0A.Isr -> Interrupts.InterruptA;
+  Alarm0B.Isr -> Interrupts.InterruptB;
+
+  AlarmA = Alarm0A;
+  AlarmB = Alarm0B;
+}
