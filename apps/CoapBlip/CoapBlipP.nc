@@ -42,19 +42,23 @@ module CoapBlipP {
   uses {
     interface Boot;
     interface SplitControl as RadioControl;
+    interface Leds;
+
 #ifdef COAP_SERVER_ENABLED
     interface CoAPServer;
 #ifdef COAP_RESOURCE_KEY
     interface Mount;
 #endif
 #endif
+
 #ifdef COAP_CLIENT_ENABLED
     interface CoAPClient;
     interface ForwardingTableEvents;
 #endif
-    interface Leds;
   }
+
   provides interface Init;
+
 } implementation {
 #ifdef COAP_CLIENT_ENABLED
   uint8_t node_integrate_done = FALSE;
@@ -79,6 +83,7 @@ module CoapBlipP {
     // needs to be before registerResource to setup context:
     call CoAPServer.bind(COAP_SERVER_PORT);
 
+    call CoAPServer.registerWellknownCore();
     for (i=0; i < NUM_URIS; i++) {
       call CoAPServer.registerResource(uri_key_map[i].uri,
 				       uri_key_map[i].urilen - 1,

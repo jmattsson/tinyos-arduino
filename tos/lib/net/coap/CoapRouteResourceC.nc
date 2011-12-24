@@ -30,15 +30,12 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-generic configuration CoapFlashResourceC(uint8_t uri_key) {
+generic configuration CoapRouteResourceC(typedef val_t, uint8_t uri_key) {
   provides interface ReadResource;
-  provides interface WriteResource;
-  uses interface ConfigStorage;
-}
-implementation {
-  components new CoapFlashResourceP(uri_key) as CoapFlashResourceP;
-
-  ReadResource = CoapFlashResourceP;
-  WriteResource = CoapFlashResourceP;
-  ConfigStorage = CoapFlashResourceP;
-}
+  uses interface ForwardingTable;
+} implementation {
+  components new CoapRouteResourceP(val_t, uri_key) as CoapRouteResourceP;
+//   components IPStackC;
+  ReadResource = CoapRouteResourceP;
+  ForwardingTable = CoapRouteResourceP;
+  }
