@@ -1,5 +1,5 @@
 #include <Atm328pTimerconfig.h>
-configuration HplAtm328pAlarm1AC
+configuration HplAtm328pAlarms1C
 {
   provides interface Alarm<ATM328P_TIMER_1_PRECISION_TYPE, uint16_t> as AlarmA;
   provides interface Alarm<ATM328P_TIMER_1_PRECISION_TYPE, uint16_t> as AlarmB;
