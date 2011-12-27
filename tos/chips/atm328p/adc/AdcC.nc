@@ -17,7 +17,13 @@ implementation
     new ArbitratedReadC(uint16_t),
     new ArbitratedReadStreamC(uniqueCount(UQ_ATM328P_ADC_CLIENT), uint16_t);
 
+  AdcP.AdcConfigure = AdcConfigure;
+
   components SimpleFcfsArbiterC as Arbiter;
+  AdcP.Resource = Arbiter;
+
+  components HplAtm328pAdcP;
+  AdcP.HplAtm328pAdc -> HplAtm328pAdcP;
 
   ArbitratedReadC.Service = AdcP;
   ArbitratedReadC.Resource = Arbiter;
