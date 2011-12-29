@@ -49,7 +49,6 @@ inline void __nesc_atomic_end (__nesc_atomic_t old_SREG)
 #define SFR_BIT_READ(reg, bit) \
     ((*((uint8_t *)(reg - __SFR_OFFSET)) & _BV(bit)) != 0)
 
-typedef struct {} T64khz;
 #define UQ_TIMER_0_ALARM "atm328p.timer0.alarm"
 #define UQ_TIMER_1_ALARM "atm328p.timer1.alarm"
 
