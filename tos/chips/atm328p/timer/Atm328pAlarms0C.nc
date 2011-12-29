@@ -1,8 +1,8 @@
 #include <Atm328pTimerConfig.h>
-configuration HplAtm328pAlarms0C
+configuration Atm328pAlarms0C
 {
-  provides interface Alarm<ATM328P_TIMER_0_PRECISION_TYPE, uint8_t> as AlarmA;
-  provides interface Alarm<ATM328P_TIMER_0_PRECISION_TYPE, uint8_t> as AlarmB;
+  provides interface Alarm<ATM328P_TIMER_0_PRECISION_TYPE, uint8_t>[uint8_t id]
+    @atmostonce();
 }
 implementation
 {
@@ -33,6 +33,6 @@ implementation
   Alarm0A.Isr -> Interrupts.InterruptA;
   Alarm0B.Isr -> Interrupts.InterruptB;
 
-  AlarmA = Alarm0A;
-  AlarmB = Alarm0B;
+  Alarm[0] = Alarm0A;
+  Alarm[1] = Alarm0B;
 }
