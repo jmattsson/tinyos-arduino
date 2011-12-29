@@ -32,7 +32,7 @@ implementation
   {
     // TODO: ensure we're not in the middle of a conversion before switching off
 
-    ADCRSA &= ~_BV(ADEN);
+    ADCSRA &= ~_BV(ADEN);
 
     return SUCCESS;
   }
@@ -88,7 +88,7 @@ implementation
 
   async command void Adc.setAutoTriggerSource (Atm328pAdcTriggerSource_t source)
   {
-    ADCSRB = (ADCSRB & ~ADSCRB_ADTS_MASK) | (source << ADTS0);
+    ADCSRB = (ADCSRB & ~ADCSRB_ADTS_MASK) | (source << ADTS0);
   }
 
   async command Atm328pAdcTriggerSource_t Adc.getAutoTriggerSource ()
@@ -97,34 +97,34 @@ implementation
   }
 
 
-  async command void enableInterrupt ()
+  async command void Adc.enableInterrupt ()
   {
     ADCSRA |= _BV(ADIE);
   }
 
-  async command void disableInterrupt ()
+  async command void Adc.disableInterrupt ()
   {
     ADCSRA &= ~_BV(ADIE);
   }
 
-  async command bool interruptEnabled ()
+  async command bool Adc.interruptEnabled ()
   {
-    return ADCRSA & _BV(ADIE);
+    return ADCSRA & _BV(ADIE);
   }
 
 
-  async command void Adc.setPrescaler (Atm328pPrescale_t prescale)
+  async command void Adc.setPrescaler (Atm328pAdcPrescale_t prescale)
   {
-    ADCSRA = (ADCRSA & ~ADCSRA_ADPS_MASK) | (prescale << ADPS0);
+    ADCSRA = (ADCSRA & ~ADCSRA_ADPS_MASK) | (prescale << ADPS0);
   }
 
-  async command Atm328pPrescale_t Adc.getPrescaler ()
+  async command Atm328pAdcPrescale_t Adc.getPrescaler ()
   {
-    return ((ADCRSA & ADCSRA_ADPS_MASK) >> ADPS0);
+    return ((ADCSRA & ADCSRA_ADPS_MASK) >> ADPS0);
   }
 
 
-  async command void Adc.enableDigitalInput (Atm328pChannel_t channel)
+  async command void Adc.enableDigitalInput (Atm328pAdcChannel_t channel)
   {
     switch (channel)
     {
@@ -138,7 +138,7 @@ implementation
     }
   }
 
-  async command void Adc.disableDigitalInput (Atm328pChannel_t channel)
+  async command void Adc.disableDigitalInput (Atm328pAdcChannel_t channel)
   {
     switch (channel)
     {
@@ -152,10 +152,22 @@ implementation
     }
   }
 
+  async command bool Adc.digitalInputEnabled (Atm328pAdcChannel_t channel)
+  {
+    switch (channel)
+    {
+      case ATM328P_ADC_CHANNEL_0:
+      case ATM328P_ADC_CHANNEL_1:
+      case ATM328P_ADC_CHANNEL_2:
+      case ATM328P_ADC_CHANNEL_3:
+      case ATM328P_ADC_CHANNEL_4:
+      case ATM328P_ADC_CHANNEL_5: return DIDR0 & _BV(channel);
+      default: return FALSE;
+    }
+  }
 
   async command uint16_t Adc.get ()
   {
     return ADC;
   }
-
 }

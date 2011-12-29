@@ -1,3 +1,4 @@
+#include "Atm328pTimerConfig.h"
 module AdcP
 {
   provides
@@ -12,6 +13,7 @@ module AdcP
     interface AdcConfigure<const Atm328pAdcConfig_t *>[uint8_t id];
     interface Resource[uint8_t id];
     interface HplAtm328pAdc as Adc;
+    interface Alarm<ATM328P_TIMER_1_PRECISION_TYPE, uint16_t>;
   }
 }
 implementation
@@ -26,9 +28,11 @@ implementation
   op_mode_t op;
   uint8_t client;
   uint16_t *spare = 0; // list of spare buffers
-  uint16_t *buffer = 0, uint16_t buffer_count = 0, buffer_used = 0;
+  uint16_t *buffer = 0, buffer_count = 0, buffer_used = 0;
   uint16_t *done_buffer = 0, done_count = 0;
+
   uint32_t usActualPeriod;
+  uint16_t alarm_dt;
 
   bool read_stream_done_pending;
   bool read_stream_failed;
@@ -64,6 +68,21 @@ implementation
     return 0;
   }
 
+  void disable_stream_interrupts ()
+  {
+    atomic {
+      call Adc.disableAutoTrigger ();
+      call Alarm.stop ();
+    }
+  }
+
+  void calculate_alarm_interval (uint32_t usPeriod)
+  {
+    uint16_t max_period = 0xffffu >> ATM328P_TIMER_1_MICRO_DOWNSCALE;
+    usActualPeriod = (usPeriod > max_period) ? max_period : usPeriod;
+    atomic alarm_dt = usActualPeriod << ATM328P_TIMER_1_MICRO_DOWNSCALE;
+  }
+
 
   command error_t Read.read[uint8_t id] ()
   {
@@ -72,10 +91,10 @@ implementation
         return EBUSY;
 
       op = ATM328P_ADC_READ;
+      client = id;
     }
 
-    apply_configuration (call AdcConfigure[id].getConfiguration ());
-    client = id;
+    apply_configuration (call AdcConfigure.getConfiguration[id] ());
     call Adc.startConversion ();
 
     return SUCCESS;
@@ -85,16 +104,16 @@ implementation
   async command error_t ReadNow.read[uint8_t id] ()
   {
     atomic {
-      if (!call Resource[id].isOwner ())
+      if (!call Resource.isOwner[id] ())
         return FAIL;
       if (op != ATM328P_ADC_NONE || call Adc.isConverting ())
         return EBUSY;
 
       op = ATM328P_ADC_READNOW;
+      client = id;
     }
 
-    apply_configuration (call AdcConfigure[id].getConfiguration ());
-    client = id;
+    apply_configuration (call AdcConfigure.getConfiguration[id] ());
     call Adc.startConversion ();
 
     return SUCCESS;
@@ -129,7 +148,7 @@ implementation
     return SUCCESS;
   }
 
-  command error_t ReadStream.read[uint8_t id) (uint32_t usPeriod)
+  command error_t ReadStream.read[uint8_t id] (uint32_t usPeriod)
   {
     atomic {
       if (op != ATM328P_ADC_NONE)
@@ -138,16 +157,17 @@ implementation
         return ENOMEM;
 
       op = ATM328P_ADC_READSTREAM;
+      client = id;
 
       read_stream_done_pending = FALSE;
       read_stream_failed = FALSE;
     }
 
-    apply_configuration (call AdcConfigure[id].getConfiguration ());
-    client = id;
-    // FIXME - set up timer compare
+    apply_configuration (call AdcConfigure.getConfiguration[id] ());
+    calculate_alarm_interval (usPeriod);
     call Adc.setAutoTriggerSource (ATM328P_ADC_TRIGGER_TIMER1_COMP_B);
     call Adc.enableAutoTrigger ();
+    call Alarm.start (alarm_dt);
 
     return SUCCESS;
   }
@@ -156,9 +176,12 @@ implementation
   task void adc_task ()
   {
     op_mode_t mode;
-    uint8_t id = client;
+    uint8_t id;
 
-    atomic mode = op;
+    atomic {
+      id= client;
+      mode = op;
+    }
 
     switch (mode)
     {
@@ -166,7 +189,7 @@ implementation
       {
         uint16_t val = call Adc.get ();
         atomic op = ATM328P_ADC_NONE;
-        signal Read[id].readDone (SUCCESS, val);
+        signal Read.readDone[id] (SUCCESS, val);
         break;
       }
       case ATM328P_ADC_READSTREAM:
@@ -184,24 +207,25 @@ implementation
           }
         }
         if (buf)
-          signal ReadStream.bufferDone (SUCCESS, buf, count);
+          signal ReadStream.bufferDone[id] (SUCCESS, buf, count);
 
         if (failed)
         {
-          signal ReadStream.bufferDone (FAIL, buffer, buffer_used);
+          signal ReadStream.bufferDone[id] (FAIL, buffer, buffer_used);
           while ((buf = next_buffer (id)))
-            signal ReadStream.bufferDone (FAIL, buf, 0);
+            signal ReadStream.bufferDone[id] (FAIL, buf, 0);
         }
 
         if (done)
         {
           atomic {
-            read_stream_pending_done = FALSE;
+            read_stream_done_pending = FALSE;
             buffer = 0;
             buffer_used = buffer_count = 0;
             op = ATM328P_ADC_NONE;
           }
-          signal ReadStream.readDone (failed ? FAIL : SUCCESS, usActualPeriod);
+          signal
+            ReadStream.readDone[id] (failed ? FAIL : SUCCESS, usActualPeriod);
         }
         break;
       }
@@ -223,7 +247,7 @@ implementation
       uint8_t id = client;
       uint16_t val = call Adc.get ();
       atomic op = ATM328P_ADC_NONE;
-      signal ReadNow[id].readDone (SUCCESS, val);
+      signal ReadNow.readDone[id] (SUCCESS, val);
     }
     else if (mode == ATM328P_ADC_READSTREAM)
     {
@@ -236,7 +260,7 @@ implementation
           {
             read_stream_done_pending = TRUE;
             read_stream_failed = TRUE;
-            call Adc.disableAutoTrigger ();
+            disable_stream_interrupts ();
             post adc_task ();
             return;
           }
@@ -253,7 +277,7 @@ implementation
           }
           else
           {
-            call Adc.disableAutoTrigger ();
+            disable_stream_interrupts ();
             read_stream_done_pending = TRUE;
           }
         }
@@ -265,4 +289,14 @@ implementation
     else
       post adc_task ();
   }
+
+  async event void Alarm.fired ()
+  {
+    atomic {
+      if (op == ATM328P_ADC_READSTREAM)
+        call Alarm.startAt (call Alarm.getAlarm (), alarm_dt);
+    }
+  }
+
+  event void Resource.granted[uint8_t id] () {}
 }

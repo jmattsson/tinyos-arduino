@@ -1,3 +1,4 @@
+#include "Atm328pAdc.h"
 interface HplAtm328pAdc
 {
   async command void setReference (Atm328pAdcRef_t ref);
@@ -20,12 +21,12 @@ interface HplAtm328pAdc
   async command bool interruptEnabled ();
   async event void done ();
 
-  async command void setPrescaler (Atm328pPrescale_t prescale);
-  async command Atm328pPrescale_t getPrescaler ();
+  async command void setPrescaler (Atm328pAdcPrescale_t prescale);
+  async command Atm328pAdcPrescale_t getPrescaler ();
 
-  async command void enableDigitalInput (Atm328pChannel_t channel);
-  async command void disableDigitalInput (Atm328pChannel_t channel);
-  async command bool digitalInputEnabled (Atm328pChannel_t channel);
+  async command void enableDigitalInput (Atm328pAdcChannel_t channel);
+  async command void disableDigitalInput (Atm328pAdcChannel_t channel);
+  async command bool digitalInputEnabled (Atm328pAdcChannel_t channel);
 
   async command uint16_t get ();
 }

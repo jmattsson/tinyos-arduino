@@ -17,23 +17,25 @@ implementation
     new ArbitratedReadC(uint16_t),
     new ArbitratedReadStreamC(uniqueCount(UQ_ATM328P_ADC_CLIENT), uint16_t);
 
-  AdcP.AdcConfigure = AdcConfigure;
-
-  components SimpleFcfsArbiterC as Arbiter;
-  AdcP.Resource = Arbiter;
+  components new SimpleRoundRobinArbiterC(UQ_ATM328P_ADC_CLIENT) as Arbiter;
+  AdcP.Resource -> Arbiter;
 
   components HplAtm328pAdcP;
-  AdcP.HplAtm328pAdc -> HplAtm328pAdcP;
+  AdcP.Adc -> HplAtm328pAdcP;
 
-  ArbitratedReadC.Service = AdcP;
-  ArbitratedReadC.Resource = Arbiter;
+  components Atm328pAlarms1C;
+  AdcP.Alarm -> Atm328pAlarms1C.Alarm[1]; // Note: has to be COMP B (Alarm[1])
 
-  ArbitratedReadStreamC.Service = AdcP;
-  ArbitratedReadStreamC.Resource = Arbiter;
+  ArbitratedReadC.Service -> AdcP;
+  ArbitratedReadC.Resource -> Arbiter;
+
+  ArbitratedReadStreamC.Service -> AdcP;
+  ArbitratedReadStreamC.Resource -> Arbiter;
 
   ReadNow = AdcP;
   Resource = Arbiter;
-
   Read = ArbitratedReadC;
   ReadStream = ArbitratedReadStreamC;
+
+  AdcP.AdcConfigure = AdcConfigure;
 }
