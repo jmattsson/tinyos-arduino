@@ -40,6 +40,8 @@ implementation
 
   void apply_configuration (const Atm328pAdcConfig_t *cfg)
   {
+    if (!cfg)
+      return;
     call Adc.disableAutoTrigger ();
     call Adc.setReference (cfg->reference);
     call Adc.setPrescaler (cfg->prescale);
@@ -63,7 +65,7 @@ implementation
         return buf;
       }
       else
-        next = &(uint16_t *)buf[0];
+        next = (uint16_t **)&buf[0];
     }
     return 0;
   }
@@ -299,4 +301,9 @@ implementation
   }
 
   event void Resource.granted[uint8_t id] () {}
+
+  default async command const Atm328pAdcConfig_t *AdcConfigure.getConfiguration[uint8_t id] ()
+  {
+    return 0;
+  }
 }
