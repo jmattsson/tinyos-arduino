@@ -9,7 +9,9 @@ implementation
 {
   enum { ID = unique(UQ_ATM328P_ADC_CLIENT) };
 
-  components AdcC;
+  components AdcC, AdcInitP, RealMainP;
+  AdcInitP.AdcControl -> AdcC;
+  AdcInitP.PlatformInit <- RealMainP.PlatformInit;
 
   Read = AdcC.Read[ID];
   AdcConfigure = AdcC.AdcConfigure[ID];

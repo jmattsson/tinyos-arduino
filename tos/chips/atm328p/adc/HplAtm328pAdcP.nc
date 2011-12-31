@@ -170,4 +170,9 @@ implementation
   {
     return ADC;
   }
+
+  AVR_ATOMIC_HANDLER(ADC_vect)
+  {
+    signal Adc.done ();
+  }
 }

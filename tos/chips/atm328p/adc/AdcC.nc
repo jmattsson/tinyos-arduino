@@ -3,6 +3,8 @@ configuration AdcC
 {
   provides
   {
+    interface StdControl;
+
     interface ReadNow<uint16_t>[uint8_t id];
     interface Resource[uint8_t];
 
@@ -32,6 +34,7 @@ implementation
   ArbitratedReadStreamC.Service -> AdcP;
   ArbitratedReadStreamC.Resource -> Arbiter;
 
+  StdControl = HplAtm328pAdcP;
   ReadNow = AdcP;
   Resource = Arbiter;
   Read = ArbitratedReadC;

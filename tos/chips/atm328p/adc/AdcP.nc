@@ -28,7 +28,7 @@ implementation
   op_mode_t op;
   uint8_t client;
   uint16_t *spare = 0; // list of spare buffers
-  uint16_t *buffer = 0, buffer_count = 0, buffer_used = 0;
+  norace uint16_t *buffer = 0, buffer_count = 0, buffer_used = 0;
   uint16_t *done_buffer = 0, done_count = 0;
 
   uint32_t usActualPeriod;
@@ -306,4 +306,6 @@ implementation
   {
     return 0;
   }
+
+  default async event void ReadNow.readDone[uint8_t id] (error_t res, uint16_t val) {}
 }
