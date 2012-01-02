@@ -21,7 +21,7 @@ implementation
 
   command error_t StdControl.start ()
   {
-    // TODO: wait for startup, then read first (likely incorrect) sample
+    // TODO: power management, also should auto-disable during sleep (p258).
 
     ADCSRA |= _BV(ADEN);
 
@@ -30,7 +30,8 @@ implementation
 
   command error_t StdControl.stop ()
   {
-    // TODO: ensure we're not in the middle of a conversion before switching off
+    if (call Adc.isConverting ())
+      return FAIL;
 
     ADCSRA &= ~_BV(ADEN);
 
