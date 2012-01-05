@@ -6,7 +6,7 @@ generic module Atm328pAlarmC(typedef precision_tag, typedef size_type @integer()
 }
 implementation
 {
-  size_type m_t0;
+  size_type m_alarmAt;
 
   async event void Isr.fired ()
   {
@@ -35,7 +35,6 @@ implementation
       size_type now;
       size_type next = t0 + dt;
 
-      m_t0 = t0;
       now = call Alarm.getNow ();
 
       /* t0 is always assumed to be in the past */
@@ -67,9 +66,9 @@ implementation
        * appropriate value for MIN_DELTA_T should be for the particular
        * instance.
        */
-      dt += call Alarm.getNow () + 1 + MIN_DELTA_T;
+      m_alarmAt = call Alarm.getNow () + dt + 1 + MIN_DELTA_T;
 
-      call HplAlarm.start (dt);
+      call HplAlarm.start (m_alarmAt);
     }
   }
 
@@ -80,7 +79,7 @@ implementation
 
   async command size_type Alarm.getAlarm ()
   {
-    atomic return m_t0;
+    atomic return m_alarmAt;
   }
 
   default async event void Alarm.fired () {}
