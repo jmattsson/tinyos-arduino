@@ -25,6 +25,6 @@ implementation
 
   async command size_type HplAtm328pAlarm.now ()
   {
-    atomic return CNTREG;
+    atomic return *(size_type *)CNTREG;
   }
 }
