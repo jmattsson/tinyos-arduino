@@ -7,12 +7,15 @@ generic configuration AdcReadClientC()
 }
 implementation
 {
-  enum { ID = unique(UQ_ATM328P_ADC_CLIENT) };
+  enum {
+    READ_ID = unique(UQ_ATM328P_ADC_READ),
+    HAL_ID = unique(UQ_ATM328P_ADC_HAL)
+  };
 
-  components AdcC, AdcInitP, RealMainP;
-  AdcInitP.AdcControl -> AdcC;
-  AdcInitP.PlatformInit <- RealMainP.PlatformInit;
+  components AdcC, AdcReadP;
 
-  Read = AdcC.Read[ID];
-  AdcConfigure = AdcC.AdcConfigure[ID];
+  AdcC.Read[HAL_ID] <- AdcReadP.Service[READ_ID];
+  Read               = AdcReadP.Read[READ_ID];
+
+  AdcConfigure = AdcC.AdcConfigure[HAL_ID];
 }

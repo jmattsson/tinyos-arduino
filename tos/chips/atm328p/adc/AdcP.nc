@@ -25,7 +25,7 @@ implementation
     ATM328P_ADC_READSTREAM
   } op_mode_t;
 
-  op_mode_t op;
+  op_mode_t op = ATM328P_ADC_NONE;
   uint8_t client;
   uint16_t *spare = 0; // list of spare buffers
   norace uint16_t *buffer = 0, buffer_count = 0, buffer_used = 0;
@@ -75,6 +75,7 @@ implementation
     atomic {
       call Adc.disableAutoTrigger ();
       call Alarm.stop ();
+      call Adc.disableInterrupt ();
     }
   }
 
@@ -155,8 +156,12 @@ implementation
     atomic {
       if (op != ATM328P_ADC_NONE)
         return EBUSY;
-      if (!spare)
+      buffer = next_buffer (id);
+      if (!buffer)
         return ENOMEM;
+
+      buffer_count = buffer[1];
+      buffer_used = 0;
 
       op = ATM328P_ADC_READSTREAM;
       client = id;
@@ -248,6 +253,7 @@ implementation
     {
       uint8_t id = client;
       uint16_t val = call Adc.get ();
+      call Adc.disableInterrupt ();
       atomic op = ATM328P_ADC_NONE;
       signal ReadNow.readDone[id] (SUCCESS, val);
     }
@@ -289,18 +295,23 @@ implementation
         post adc_task ();
     }
     else
+    {
+      call Adc.disableInterrupt ();
       post adc_task ();
+    }
   }
 
   async event void Alarm.fired ()
   {
     atomic {
       if (op == ATM328P_ADC_READSTREAM)
+++fired,
         call Alarm.startAt (call Alarm.getAlarm (), alarm_dt);
     }
   }
 
   event void Resource.granted[uint8_t id] () {}
+
 
   default async command const Atm328pAdcConfig_t *AdcConfigure.getConfiguration[uint8_t id] ()
   {
@@ -308,4 +319,9 @@ implementation
   }
 
   default async event void ReadNow.readDone[uint8_t id] (error_t res, uint16_t val) {}
+
+  default event void Read.readDone[uint8_t id] (error_t res, uint16_t val) {}
+  default event void ReadStream.bufferDone[uint8_t id] (error_t res, uint16_t *buf, uint16_t c) {}
+  default event void ReadStream.readDone[uint8_t id] (error_t res, uint32_t usp) {}
+
 }

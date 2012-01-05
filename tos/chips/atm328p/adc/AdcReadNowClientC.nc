@@ -9,7 +9,7 @@ generic configuration AdcReadNowClientC()
 }
 implementation
 {
-  enum { ID = unique(UQ_ATM328P_ADC_CLIENT) };
+  enum { ID = unique(UQ_ATM328P_ADC_HAL) };
 
   components AdcC, AdcInitP, RealMainP;
   AdcInitP.AdcControl -> AdcC;
