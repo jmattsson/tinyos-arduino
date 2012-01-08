@@ -11,7 +11,7 @@ implementation
 {
   enum { ID = unique(UQ_ATM328P_ADC_HAL) };
 
-  components AdcC, AdcInitP, RealMainP;
+  components Atm328pAdcC as AdcC, AdcInitP, RealMainP;
   AdcInitP.AdcControl -> AdcC;
   AdcInitP.PlatformInit <- RealMainP.PlatformInit;
 

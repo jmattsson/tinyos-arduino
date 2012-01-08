@@ -1,5 +1,5 @@
 #include "Atm328pTimerConfig.h"
-module AdcP
+module Atm328pAdcP
 {
   provides
   {

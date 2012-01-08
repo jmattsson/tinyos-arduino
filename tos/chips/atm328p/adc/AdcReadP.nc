@@ -6,7 +6,7 @@ configuration AdcReadP
 }
 implementation
 {
-  components AdcC, AdcInitP, RealMainP;
+  components Atm328pAdcC as AdcC, AdcInitP, RealMainP;
   AdcInitP.AdcControl -> AdcC;
   AdcInitP.PlatformInit <- RealMainP.PlatformInit;
 

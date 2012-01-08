@@ -1,5 +1,5 @@
 #include "Atm328pAdc.h"
-configuration AdcC
+configuration Atm328pAdcC
 {
   provides
   {
@@ -15,7 +15,7 @@ configuration AdcC
 }
 implementation
 {
-  components AdcP;
+  components Atm328pAdcP as AdcP;
   components new SimpleRoundRobinArbiterC(UQ_ATM328P_ADC_HAL) as Arbiter;
   AdcP.Resource -> Arbiter;
 

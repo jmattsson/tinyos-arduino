@@ -9,7 +9,7 @@ implementation
 {
   enum { HAL_ID = unique(UQ_ATM328P_ADC_HAL) };
 
-  components AdcC, AdcReadP;
+  components Atm328pAdcC as AdcC, AdcReadP;
 
   AdcC.Read[HAL_ID] <- AdcReadP.Service[HAL_ID];
   Read               = AdcReadP.Read[HAL_ID];

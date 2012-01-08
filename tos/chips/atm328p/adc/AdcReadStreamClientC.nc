@@ -30,7 +30,7 @@ implementation
     HAL_ID = unique(UQ_ATM328P_ADC_HAL)
   };
 
-  components AdcC, AdcReadStreamP;
+  components Atm328pAdcC as AdcC, AdcReadStreamP;
 
   AdcC.ReadStream[HAL_ID] <- AdcReadStreamP.Service[HAL_ID];
   ReadStream               = AdcReadStreamP.ReadStream[HAL_ID];
