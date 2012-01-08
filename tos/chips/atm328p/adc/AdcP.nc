@@ -255,14 +255,14 @@ implementation
     {
       uint8_t id = client;
       uint16_t val = call Adc.get ();
-      call Adc.disableInterrupt ();
       atomic op = ATM328P_ADC_NONE;
       signal ReadNow.readDone[id] (SUCCESS, val);
     }
     else if (mode == ATM328P_ADC_READSTREAM)
     {
       atomic {
-        buffer[buffer_used++] = call Adc.get ();
+        if (buffer && buffer_used < buffer_count)
+          buffer[buffer_used++] = call Adc.get ();
 
         if (buffer_used == buffer_count)
         {
