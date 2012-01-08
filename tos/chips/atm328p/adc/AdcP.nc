@@ -249,6 +249,8 @@ implementation
 
     atomic mode = op;
 
+    call Adc.disableInterrupt();
+
     if (mode == ATM328P_ADC_READNOW)
     {
       uint8_t id = client;
@@ -295,18 +297,17 @@ implementation
         post adc_task ();
     }
     else
-    {
-      call Adc.disableInterrupt ();
       post adc_task ();
-    }
   }
 
   async event void Alarm.fired ()
   {
     atomic {
       if (op == ATM328P_ADC_READSTREAM)
-++fired,
+      {
+        call Adc.enableInterrupt ();
         call Alarm.startAt (call Alarm.getAlarm (), alarm_dt);
+      }
     }
   }
 
