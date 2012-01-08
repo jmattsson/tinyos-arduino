@@ -32,8 +32,8 @@ implementation
 
   components AdcC, AdcReadStreamP;
 
-  AdcC.ReadStream[HAL_ID] <- AdcReadStreamP.Service[STREAM_ID];
-  ReadStream               = AdcReadStreamP.ReadStream[STREAM_ID];
+  AdcC.ReadStream[HAL_ID] <- AdcReadStreamP.Service[HAL_ID];
+  ReadStream               = AdcReadStreamP.ReadStream[HAL_ID];
 
   AdcConfigure = AdcC.AdcConfigure[HAL_ID];
 }

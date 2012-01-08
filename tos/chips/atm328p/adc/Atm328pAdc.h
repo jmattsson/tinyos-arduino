@@ -70,6 +70,5 @@ typedef struct {
 
 
 #define UQ_ATM328P_ADC_HAL    "atm328p.adc"
-#define UQ_ATM328P_ADC_READ   "atm328p.adc.read"
 #define UQ_ATM328P_ADC_STREAM "atm328p.adc.stream"
 #endif
