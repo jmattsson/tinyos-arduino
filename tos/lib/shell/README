@@ -1,0 +1,53 @@
+The lib/shell components provide a (hopefully) convenient way of implementing
+simple command shells.
+
+It was inspired by lib/net/blip/shell, but differs in the following ways:
+
+  * Command execution is split-phase. Long running commands are easy to
+    implement, as executeDone() must be signalled to allow the next command
+    to be processed by the shell.
+
+  * Commands may be interrupted/aborted. Long running commands can thus
+    stop reposting themselves, and signal early completion.
+
+  * Command output is split-phase. Commands wishing to return lots of
+    information can simply wait to be told when it's possible to output
+    the next chunk of data. Obtaining the maximum chunk of output possible
+    in each go is also supported, allowing commands to optimize their
+    output (e.g. to maximize payload/headers ratio for network shells).
+
+  * Support for different types of shells are possible, e.g. serial, UDP.
+    A command does not need to know what type of shell it will be used with.
+
+  * With care, commands can be shared across multiple shells (just be
+    careful to either support reentrancy or disallow it altogether).
+
+  * The output interface is separate from the command interface, and can be
+    wired to support diagnostics/snooping of command activity, or even
+    support blind terminals.
+
+  * Command line parsing is delegated to its own module, allowing for easy
+    extension of features if so desired (environment vars, loops, etc).
+
+  * Limited interactive line editing supported in the SerialShellC.
+    Non-interactive shell types (e.g. UDP-based ones) don't need this,
+    and don't incur the overhead of this support.
+
+Of course, there are some downsides:
+
+  * Increased wiring requirements. As there can be more than one shell,
+    commands cannot auto-wire themselves to The One True Shell.
+    To alleviate this, the macros in ShellCommand.h abstract away the
+    intricacies, and pre-configured components can be provided for the
+    typical use case (e.g. single UDP shell or serial interface using
+    PlatformSerialC).
+
+  * To support multiple concurrent shells, the commands must be written
+    to handle reentrancy. For long-running/posting commands, this involves
+    keeping extra state around, or alternatively they can simply detect
+    attempts at reentrancy and return EBUSY (though that is less user
+    friendly).
+
+
+For an example of how to make use of lib/shell, have a look at the
+TestSerialShell application in apps/tests/TestSerialShell.

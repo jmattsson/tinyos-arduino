@@ -32,8 +32,8 @@
 
 interface ShellCommandParser
 {
+  // FIXME - these two should be moved to an InteractiveLineBuffer instead
   async command void inputByte (uint8_t byte);
-
   event void abortRequested ();
 
   event void parseFailed ();

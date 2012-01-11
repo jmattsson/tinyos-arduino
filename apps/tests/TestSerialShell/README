@@ -1,0 +1,4 @@
+A small application demonstrating how to use lib/shell to put together
+a serial command line shell easily.
+
+Also see tos/lib/shell for examples on how to implement actual shell commands.
