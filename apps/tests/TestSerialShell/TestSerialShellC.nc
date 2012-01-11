@@ -42,13 +42,13 @@ implementation
   App.UartStream -> PlatformSerialC;
 
   components
-    new SerialShellC(uniqueCount(UQ_SHELL_COMMAND)),
+    new SerialShellC(NUM_COMMANDS_FOR_SHELL(Shell)) as Shell,
     new SimpleCommandParserC(),
     PlatformSerialC;
 
-  SerialShellC.Init <- MainC.SoftwareInit;
-  SerialShellC.ShellCommandParser -> SimpleCommandParserC;
-  SerialShellC.UartStream -> PlatformSerialC;
+  Shell.Init <- MainC.SoftwareInit;
+  Shell.ShellCommandParser -> SimpleCommandParserC;
+  Shell.UartStream -> PlatformSerialC;
 
-  DECLARE_SHELL_COMMAND("uptime", ShellCmdUptimeC, SerialShellC);
+  DECLARE_SHELL_COMMAND("uptime", ShellCmdUptimeC, Shell);
 }

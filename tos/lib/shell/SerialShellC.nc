@@ -44,16 +44,10 @@ generic module SerialShellC(uint8_t num_cmds)
 }
 implementation
 {
-  #ifndef SERIAL_SHELL_OUTPUT_BUFFER_SIZE
-  #define SERIAL_SHELL_OUTPUT_BUFFER_SIZE 81
-  #endif
-
   enum { NO_CMD = 0xff };
 
   uint8_t cur_cmd = NO_CMD;
   bool printing_prompt = FALSE;
-
-  char output_buf[SERIAL_SHELL_OUTPUT_BUFFER_SIZE];
 
   typedef enum { PROMPT_BARE, PROMPT_OK, PROMPT_FAIL, PROMPT_ABORT } prompt_t;
 
@@ -67,8 +61,9 @@ implementation
     };
     const char *prompt = prompts[type];
 
-    printing_prompt = TRUE;
-    call UartStream.send ((uint8_t *)prompt, strlen (prompt));
+    printing_prompt =
+      (call UartStream.send ((uint8_t *)prompt, strlen (prompt)) == SUCCESS) ?
+        TRUE : FALSE;
   }
 
 
@@ -86,6 +81,12 @@ implementation
       return call UartStream.send ((uint8_t *)str, len);
   }
 
+  command size_t ShellOutput.limit[uint8_t id] ()
+  {
+    // We don't need to buffer/packetize the output, so no real limit
+    return (size_t)-1;
+  }
+
   event void ShellCommand.executeDone[uint8_t id] (error_t result)
   {
     if (id != cur_cmd)
@@ -93,6 +94,7 @@ implementation
 
     cur_cmd = NO_CMD;
     call ShellCommandParser.releaseArgs ();
+    // TODO: support ECANCEL to print PROMPT_ABORT
     print_prompt (result == SUCCESS ? PROMPT_OK : PROMPT_FAIL);
   }
 
@@ -121,6 +123,7 @@ implementation
     else
     {
       cur_cmd = i;
+      // TODO: support EBUSY return code and post a retry-task?
       call ShellCommand.execute[i] (argc, argv);
     }
   }

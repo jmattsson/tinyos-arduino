@@ -39,6 +39,10 @@ typedef struct
   size_t len;
 } nstring_t;
 
+// FIXME - ownership/locking is needed, as the buffer may be in use by
+// a ShellOutput.output() well past the completion of the task in which
+// format_string was called.
+
 nstring_t format_string (const char *fmt, ...);
 
 #endif

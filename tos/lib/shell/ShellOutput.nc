@@ -36,4 +36,7 @@ interface ShellOutput
 
   // note: only signalled if outputn returned SUCCESS
   event void outputDone ();
+
+  // maximum length output which can be successfully submitted
+  command size_t limit ();
 }

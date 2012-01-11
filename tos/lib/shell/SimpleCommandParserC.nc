@@ -32,6 +32,8 @@
 
 generic module SimpleCommandParserC()
 {
+  // TODO: turn this from a generic module into a parameterized interface,
+  //  and just duplicate the state rather than all the code
   provides interface ShellCommandParser;
 }
 implementation
