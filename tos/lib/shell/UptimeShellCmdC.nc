@@ -29,34 +29,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "StringFormatter.h"
-
-module StringFormatterC
+configuration UptimeShellCmdC
 {
+  provides interface ShellExecute;
+  uses interface ShellOutput;
 }
 implementation
 {
-  #ifndef SHELL_OUTPUT_FORMATTER_BUFFER_SIZE
-  #define SHELL_OUTPUT_FORMATTER_BUFFER_SIZE 81
-  #endif
+  components UptimeShellCmdP as Cmd, LocalTimeMilliC, ScratchAreaC;
 
-  char buf[SHELL_OUTPUT_FORMATTER_BUFFER_SIZE];
+  Cmd.LocalTime -> LocalTimeMilliC;
+  Cmd.Scratch -> ScratchAreaC;
 
-  nstring_t format_string (const char *fmt, ...) @C()
-  {
-    nstring_t res = { 0, 0 };
-    int c;
-    va_list ap;
-    va_start (ap, fmt);
-    c = vsnprintf (buf, sizeof (buf), fmt, ap);
-    va_end (ap);
-    if (c >= 0 && c < SHELL_OUTPUT_FORMATTER_BUFFER_SIZE)
-    {
-      res.str = buf;
-      res.len = (size_t)c;
-    }
-    return res;
-  }
-
+  ShellExecute = Cmd;
+  ShellOutput = Cmd;
 }

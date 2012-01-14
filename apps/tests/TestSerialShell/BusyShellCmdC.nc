@@ -29,17 +29,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-configuration ShellCmdUptimeC
+
+module BusyShellCmdC
 {
   provides interface ShellExecute;
   uses interface ShellOutput;
 }
 implementation
 {
-  components ShellCmdUptimeP as Cmd, StringFormatterC, LocalTimeMilliC;
+  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  {
+    return EBUSY;
+  }
 
-  Cmd.LocalTime -> LocalTimeMilliC;
-  
-  ShellExecute = Cmd;
-  ShellOutput = Cmd;
+  command void ShellExecute.abort () {}
+
+  event void ShellOutput.outputDone () {}
 }

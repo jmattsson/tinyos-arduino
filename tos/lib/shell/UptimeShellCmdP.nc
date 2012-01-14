@@ -30,19 +30,43 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _STRING_FORMATTER_H_
-#define _STRING_FORMATTER_H_
-
-typedef struct
+module UptimeShellCmdP
 {
-  const char *str;
-  size_t len;
-} nstring_t;
+  provides interface ShellExecute;
+  uses interface ShellOutput;
+  uses interface LocalTime<TMilli>;
+  uses interface VariantPool as Scratch;
+}
+implementation
+{
+  char *buf = 0;
 
-// FIXME - ownership/locking is needed, as the buffer may be in use by
-// a ShellOutput.output() well past the completion of the task in which
-// format_string was called.
+  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  {
+    size_t len = 0;
+    int ret;
 
-nstring_t format_string (const char *fmt, ...);
+    if (buf)
+      return EBUSY;
 
-#endif
+    buf = call Scratch.reserve (&len);
+    ret = snprintf (buf, len, "Uptime: %lus\r\n", call LocalTime.get () >> 10);
+    if (ret <= 0)
+    {
+      call Scratch.release (buf);
+      return FAIL;
+    }
+
+    call Scratch.reduce (buf, ret);
+    return call ShellOutput.output (buf, ret);
+  }
+
+  command void ShellExecute.abort () {}
+
+  event void ShellOutput.outputDone ()
+  {
+    call Scratch.release (buf);
+    buf = 0;
+    signal ShellExecute.executeDone (SUCCESS);
+  }
+}
