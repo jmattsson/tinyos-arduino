@@ -33,27 +33,55 @@
 generic module VariantPoolC(size_t pool_size)
 {
   provides interface VariantPool;
-  provides interface Init;
 }
 implementation
 {
-  typedef struct 
+  typedef struct list_node
   {
-    size_t len;         // space available to user (i.e. excluding this field)
-    list_node_t *next;  // link field, also start of user data when alloc'd
+    size_t len;  // space available to user (i.e. excluding this field)
+    struct list_node *next;  // link field, also start of user data when alloc'd
   } list_node_t;
 
-  char pool[pool_size];
-  static alloc_t *free_list;
+  union {
+    list_node_t first_node;
+    char raw[pool_size];
+  } pool = { { pool_size - sizeof (size_t), 0 } };
+
+  list_node_t *free_list = &pool.first_node;
+
+
+#ifdef VARIANT_POOL_DEBUG
+  void dump_free_list (const char *where)
+  {
+    list_node_t *node = free_list;
+    printf("free_list[%s]: ", where);
+    for (; node; node = node->next)
+    {
+      printf("%u@%p->%p ", node->len, node, node->next);
+    }
+    printf("\r\n");
+  }
+#else
+  #define dump_free_list(x)
+#endif
+
 
   inline bool can_split (list_node_t *node, size_t newlen)
   {
-    return (newlen < node->len) && (node->len - newlen) >= sizeof (list_node_t);
+    size_t min_size = sizeof (list_node_t *);
+    return (newlen < node->len) &&
+           (newlen > min_size) &&
+           (node->len - newlen) > min_size;
   }
 
   inline void *node_to_data (list_node_t *node)
   {
     return &node->next;
+  }
+
+  inline list_node_t *data_to_node (void *p)
+  {
+    return (list_node_t *)(((char *)p) - sizeof (size_t));
   }
 
   inline void *end_of_node (list_node_t *node)
@@ -64,6 +92,7 @@ implementation
   void unlink (list_node_t *node)
   {
     list_node_t **where = &free_list;
+
     while (*where)
     {
       list_node_t *cur = *where;
@@ -77,41 +106,30 @@ implementation
     }
   }
 
-  void link (list_node_t *node)
+  void merge_with_next (list_node_t *node)
   {
-    list_node_t *prev;
-    for (prev = free_list; prev; prev = prev->next)
+    if (node && end_of_node (node) == node->next)
     {
-      if (node > prev)
-      {
-        if (end_of_node (prev) == node)
-        {
-          // merge with previous node
-          prev->len += node->len + sizeof (size_t);
-        }
-        else if (end_of_node (node) == prev->next)
-        {
-          // merge next node with this, and replace this node
-          node->len += prev->next->len + sizeof (size_t);
-          prev->next = node;
-        }
-        else
-        {
-          node->next = prev->next;
-          prev->next = node;
-        }
-        return;
-      }
+      node->len += node->next->len + sizeof (size_t);
+      node->next = node->next->next;
     }
   }
 
-
-  command error_t Init.init ()
+  void link (list_node_t *node)
   {
-    list_node_t *node = (list_node_t *)pool;
-    node->len = pool_size - sizeof (size_t);
-    node->next = 0;
-    free_list = node;
+    list_node_t **where = &free_list, *prev = 0;
+
+    while (*where && node > *where)
+    {
+      prev = *where;
+      where = &(*where)->next;
+    }
+
+    node->next = *where;
+    *where = node;
+
+    merge_with_next (node);
+    merge_with_next (prev);
   }
 
   command void *VariantPool.alloc (size_t len)
@@ -120,6 +138,8 @@ implementation
 
     if (!free_list)
       return 0;
+
+    dump_free_list("alloc-in");
 
     best = free_list;
     for (cur = free_list->next; cur; cur = cur->next)
@@ -131,10 +151,12 @@ implementation
     if (best->len < len)
       return 0;
 
+    unlink (best);
+
     // don't return unnecessarily large chunks
     call VariantPool.reduce (&best->next, len);
 
-    unlink (best);
+    dump_free_list("alloc-out");
 
     return node_to_data (best);
   }
@@ -145,6 +167,8 @@ implementation
     if (!actual_len || !free_list)
       return 0;
 
+    dump_free_list("reserve-in");
+
     best = free_list;
     for (cur = free_list->next; cur; cur = cur->next)
     {
@@ -154,13 +178,17 @@ implementation
 
     unlink (best);
 
+    dump_free_list("reserve-out");
+
     *actual_len = best->len;
     return node_to_data (best);
   }
 
   command void VariantPool.reduce (void *p, size_t newlen)
   {
-    list_node_t *node = p;
+    list_node_t *node = data_to_node (p);
+
+    dump_free_list("reduce-in");
 
     // if we can't split this block, reduce is a no-op
     if (can_split (node, newlen))
@@ -168,15 +196,21 @@ implementation
       list_node_t *fragment = (list_node_t *)((char *)p + newlen);
       fragment->len = node->len - newlen - sizeof (size_t);
       node->len = newlen;
-      call VariantPool.release (fragment);
+      call VariantPool.release (node_to_data (fragment));
     }
+
+    dump_free_list("reduce-out");
   }
 
   command void VariantPool.release (void *p)
   {
-    list_node_t *node = (list_node_t *)p;
+    list_node_t *node = data_to_node (p);
+
+    dump_free_list("release-in");
 
     if (node)
       link (node);
+
+    dump_free_list("release-out");
   }
 }

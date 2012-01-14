@@ -29,12 +29,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-configuration ScratchAreaC
-{
-  provides interface VariantPool;
-}
-implementation
-{
-  components new VariantPoolC(128) as Scratch;
-  VariantPool = Scratch;
-}
+
+#ifndef _PLATFORM_LED_H_
+#define _PLATFORM_LED_H_
+
+#define PLATFORM_LED_COUNT 1
+
+#define PLATFORM_LED_RED 0
+
+#endif
