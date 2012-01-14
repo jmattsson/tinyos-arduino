@@ -1,0 +1,4 @@
+COMPONENT=TestAppC
+PFLAGS += -I$(TOSDIR)/lib/printf
+#CFLAGS += -DVARIANT_POOL_DEBUG
+include $(MAKERULES)
