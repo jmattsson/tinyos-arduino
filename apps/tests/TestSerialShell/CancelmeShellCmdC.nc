@@ -30,29 +30,22 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "StringFormatter.h"
-
-module ShellCmdUptimeP
+module CancelmeShellCmdC
 {
   provides interface ShellExecute;
   uses interface ShellOutput;
-  uses interface LocalTime<TMilli>;
 }
 implementation
 {
   command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
   {
-    nstring_t str;
-    str = format_string ("Uptime: %lus\r\n", call LocalTime.get () >> 10);
-    if (str.len)
-      call ShellOutput.output (str.str, str.len);
     return SUCCESS;
   }
 
-  command void ShellExecute.abort () {}
-
-  event void ShellOutput.outputDone ()
+  command void ShellExecute.abort ()
   {
-    signal ShellExecute.executeDone (SUCCESS);
+    signal ShellExecute.executeDone (ECANCEL);
   }
+
+  event void ShellOutput.outputDone () {}
 }

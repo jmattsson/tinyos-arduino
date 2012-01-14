@@ -8,7 +8,7 @@ It was inspired by lib/net/blip/shell, but differs in the following ways:
     to be processed by the shell.
 
   * Commands may be interrupted/aborted. Long running commands can thus
-    stop reposting themselves, and signal early completion.
+    stop reposting themselves, and signal early completion (ECANCEL).
 
   * Command output is split-phase. Commands wishing to return lots of
     information can simply wait to be told when it's possible to output
@@ -45,9 +45,13 @@ Of course, there are some downsides:
   * To support multiple concurrent shells, the commands must be written
     to handle reentrancy. For long-running/posting commands, this involves
     keeping extra state around, or alternatively they can simply detect
-    attempts at reentrancy and return EBUSY (though that is less user
-    friendly).
+    attempts at reentrancy and return EBUSY.
 
+  * If the output is fanned out, a lot of care must be taken to not send
+    multiple outputDone() signals, or to reference the output string after
+    an outputDone() event has been signalled. Diagnostic/snoop wiring
+    should be passive (not signal outputDone()), and copy the output into
+    its own buffers straight away.
 
 For an example of how to make use of lib/shell, have a look at the
 TestSerialShell application in apps/tests/TestSerialShell.

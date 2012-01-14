@@ -50,5 +50,7 @@ implementation
   Shell.ShellCommandParser -> SimpleCommandParserC;
   Shell.UartStream -> PlatformSerialC;
 
-  DECLARE_SHELL_COMMAND("uptime", ShellCmdUptimeC, Shell);
+  DECLARE_SHELL_COMMAND("uptime", UptimeShellCmdC, Shell);
+  DECLARE_SHELL_COMMAND("busy", BusyShellCmdC, Shell);
+  DECLARE_SHELL_COMMAND("cancelme", CancelmeShellCmdC, Shell);
 }

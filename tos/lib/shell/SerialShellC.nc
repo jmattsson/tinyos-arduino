@@ -49,13 +49,16 @@ implementation
   uint8_t cur_cmd = NO_CMD;
   bool printing_prompt = FALSE;
 
-  typedef enum { PROMPT_BARE, PROMPT_OK, PROMPT_FAIL, PROMPT_ABORT } prompt_t;
+  typedef enum {
+    PROMPT_BARE, PROMPT_OK, PROMPT_BUSY, PROMPT_FAIL, PROMPT_ABORT
+  } prompt_t;
 
   void print_prompt (prompt_t type)
   {
     static const char *prompts[] = {
       "# ",
       "OK\r\n# ",
+      "BUSY\r\n# ",
       "FAILED\r\n# ",
       "^C\r\n# "
     };
@@ -66,6 +69,16 @@ implementation
         TRUE : FALSE;
   }
 
+  inline prompt_t error_to_prompt (error_t result)
+  {
+    switch (result)
+    {
+      case SUCCESS: return PROMPT_OK;
+      case EBUSY: return PROMPT_BUSY;
+      case ECANCEL: return PROMPT_ABORT;
+      default: return PROMPT_FAIL;
+    }
+  }
 
   command error_t Init.init ()
   {
@@ -91,11 +104,9 @@ implementation
   {
     if (id != cur_cmd)
       return; // not our execute
-
     cur_cmd = NO_CMD;
     call ShellCommandParser.releaseArgs ();
-    // TODO: support ECANCEL to print PROMPT_ABORT
-    print_prompt (result == SUCCESS ? PROMPT_OK : PROMPT_FAIL);
+    print_prompt (error_to_prompt (result));
   }
 
   event void ShellCommandParser.parseCompleted(uint8_t argc, const char *argv[])
@@ -104,9 +115,8 @@ implementation
 
     if (!argc || !*argv[0]) // no command, just reprint prompt
     {
-      call ShellCommandParser.releaseArgs ();
       print_prompt (PROMPT_BARE);
-      return;
+      goto release_args;
     }
 
     for (i = 0; i < num_cmds; ++i)
@@ -117,15 +127,25 @@ implementation
 
     if (i == num_cmds)
     {
-      call ShellCommandParser.releaseArgs ();
       print_prompt (PROMPT_FAIL); // command not found
+      goto release_args;
     }
     else
     {
+      error_t result;
       cur_cmd = i;
-      // TODO: support EBUSY return code and post a retry-task?
-      call ShellCommand.execute[i] (argc, argv);
+      result = call ShellCommand.execute[i] (argc, argv);
+      if (result != SUCCESS)
+      {
+        cur_cmd = NO_CMD;
+        print_prompt (error_to_prompt (result));
+        goto release_args;
+      }
     }
+    return;
+
+  release_args:
+    call ShellCommandParser.releaseArgs ();
   }
 
   event void ShellCommandParser.parseFailed ()
