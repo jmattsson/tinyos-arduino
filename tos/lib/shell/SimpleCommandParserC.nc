@@ -45,10 +45,9 @@ implementation
   {
     uint8_t max_args = *argc;
     char *p;
-    bool escaped = FALSE, inquote = FALSE, inspace = FALSE;
+    bool escaped = FALSE, inquote = FALSE, inspace = TRUE;
 
     *argc = 0;
-    argv[(*argc)++] = str;
 
     for (p = str; *p && *argc < max_args; ++p)
     {
@@ -66,7 +65,7 @@ implementation
       if (inspace && !escaped && *p != ' ')
       {
         inspace = FALSE;
-        argv[*argc++] = p;
+        argv[(*argc)++] = p;
         continue;
       }
       if (*p == '\\')
