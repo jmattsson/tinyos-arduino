@@ -32,23 +32,12 @@
 
 #include "ShellCommand.h"
 
-configuration TestSerialShellC
+configuration HelpSerialCmdC
 {
 }
 implementation
 {
-  components TestSerialShellP as App, MainC, PlatformSerialC;
-  App.Boot -> MainC;
-  App.UartStream -> PlatformSerialC;
-
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
-
-
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
-  components BusyShellCmdC, CancelmeShellCmdC;
-
-  WIRE_SHELL_COMMAND("busy", BusyShellCmdC, SerialShell);
-  WIRE_SHELL_COMMAND("cancelme", CancelmeShellCmdC, SerialShell);
+  components PlatformSerialShellC as SerialShell, new HelpShellCmdC();
+  WIRE_SHELL_COMMAND("help", HelpShellCmdC, SerialShell);
+  HelpShellCmdC.CommandList -> SerialShell;
 }
