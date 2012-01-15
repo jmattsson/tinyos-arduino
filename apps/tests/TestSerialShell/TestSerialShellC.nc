@@ -50,7 +50,12 @@ implementation
   Shell.CommandLineParser -> SimpleCommandParserC;
   Shell.UartStream -> PlatformSerialC;
 
-  DECLARE_SHELL_COMMAND("uptime", UptimeShellCmdC, Shell);
-  DECLARE_SHELL_COMMAND("busy", BusyShellCmdC, Shell);
-  DECLARE_SHELL_COMMAND("cancelme", CancelmeShellCmdC, Shell);
+  components UptimeShellCmdC, BusyShellCmdC, CancelmeShellCmdC;
+  WIRE_SHELL_COMMAND("uptime", UptimeShellCmdC, Shell);
+  WIRE_SHELL_COMMAND("busy", BusyShellCmdC, Shell);
+  WIRE_SHELL_COMMAND("cancelme", CancelmeShellCmdC, Shell);
+
+  components new HelpShellCmdC ();
+  WIRE_SHELL_COMMAND("help", HelpShellCmdC, Shell);
+  HelpShellCmdC.CommandList -> Shell;
 }

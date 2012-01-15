@@ -34,8 +34,10 @@ generic module SerialShellC(uint8_t num_cmds)
 {
   provides interface Init;
   provides interface ShellOutput[uint8_t id];
+  provides interface ShellCommand as CommandList[uint8_t id];
 
   uses interface ShellCommand[uint8_t id];
+  uses interface ShellExecute[uint8_t id];
   uses interface CommandLineParser;
   uses interface UartStream;
 }
@@ -115,7 +117,7 @@ implementation
     return (size_t)-1;
   }
 
-  event void ShellCommand.executeDone[uint8_t id] (error_t result)
+  event void ShellExecute.executeDone[uint8_t id] (error_t result)
   {
     if (id != cur_cmd)
       return; // not our execute
@@ -128,7 +130,7 @@ implementation
   task void abort_requested ()
   {
     if (cur_cmd != NO_CMD)
-      call ShellCommand.abort[cur_cmd] ();
+      call ShellExecute.abort[cur_cmd] ();
     else
       print_prompt (PROMPT_ABORT);
   }
@@ -176,7 +178,7 @@ implementation
       {
         error_t result;
         cur_cmd = i;
-        result = call ShellCommand.execute[i] (argc, (const char **)argv);
+        result = call ShellExecute.execute[i] (argc, (const char **)argv);
         if (result != SUCCESS)
         {
           cur_cmd = NO_CMD;
@@ -238,17 +240,21 @@ implementation
       *rx++ = byte;
   }
 
+  command const char *CommandList.getCommandString[uint8_t id] ()
+  {
+    return call ShellCommand.getCommandString[id] ();
+  }
 
   default command const char *ShellCommand.getCommandString[uint8_t id] ()
   {
     return "";
   }
 
-  default command error_t ShellCommand.execute[uint8_t id] (uint8_t argc, const char *argv_[])
+  default command error_t ShellExecute.execute[uint8_t id] (uint8_t argc, const char *argv_[])
   {
     return FAIL;
   }
 
-  default command void ShellCommand.abort[uint8_t id] () {}
+  default command void ShellExecute.abort[uint8_t id] () {}
   default event void ShellOutput.outputDone[uint8_t id] () {}
 }
