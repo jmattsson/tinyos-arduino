@@ -148,8 +148,6 @@ implementation
     error_t res =
       call CommandLineParser.parse (recv_buf, &argc, argv);
 
-    atomic rx = recv_buf;
-
     if (res == SUCCESS)
     {
       uint8_t i;
@@ -202,46 +200,39 @@ implementation
 
   async event void UartStream.receivedByte (uint8_t byte)
   {
-    atomic {
-      if (byte == ABORT_KEY)
-      {
-        rx = recv_buf;
-        post abort_requested ();
-        return;
-      }
-
-      if (buffer_locked)
-        return;
-
-      if (byte == '\r' || byte == '\n')
-      {
-        *rx = 0;
-        buffer_locked = TRUE;
-        post parse_command ();
-        return;
-      }
-
-      if (byte < ' ' || byte == 0x7f)
-      {
-        switch (byte)
-        {
-          case 0x08: // Backspace
-          case 0x7f: // Delete
-            if (rx > recv_buf)
-              --rx;
-              // TODO: send " \b" to clear char
-            break;
-          case 0x15: // ctrl-u
-            rx = recv_buf;
-            // TODO: send "  ...\r" to clear line
-            break;
-          default: break;
-        }
-      }
-
-      if (rx < (recv_buf + sizeof (recv_buf) -1))
-        *rx++ = byte;
+    if (byte == ABORT_KEY)
+    {
+      rx = recv_buf;
+      post abort_requested ();
+      return;
     }
+
+    if (buffer_locked)
+      return;
+
+    if (byte < ' ' || byte == 0x7f)
+    {
+      switch (byte)
+      {
+        case 0x08: // Backspace
+        case 0x7f: // Delete
+          if (rx > recv_buf)
+            --rx;
+          break;
+        case '\r':
+        case '\n':
+          *rx = 0;
+          rx = recv_buf;
+          buffer_locked = TRUE;
+          post parse_command ();
+          break;
+        default: break;
+      }
+      return;
+    }
+
+    if (rx < (recv_buf + sizeof (recv_buf) -1))
+      *rx++ = byte;
   }
 
 
