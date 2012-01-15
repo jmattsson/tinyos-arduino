@@ -30,25 +30,36 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ShellCommand.h"
-
-configuration TestSerialShellC
+/**
+ * Provides a pre-wired serial shell, using PlatformSerialC.
+ *
+ * The name to register commands against is SerialShell, e.g.:
+ *   components PlatformSerialShellC as SerialShell;
+ *   WIRE_SHELL_COMMAND("mycmd", MyCmdC, SerialShell);
+ */
+configuration PlatformSerialShellC
 {
+  provides interface ShellOutput[uint8_t id];
+  provides interface ShellCommand as CommandList[uint8_t id];
+
+  uses interface ShellCommand[uint8_t id];
+  uses interface ShellExecute[uint8_t id];
 }
 implementation
 {
-  components TestSerialShellP as App, MainC, PlatformSerialC;
-  App.Boot -> MainC;
-  App.UartStream -> PlatformSerialC;
+  components
+    new SerialShellC(NUM_COMMANDS_FOR_SHELL(SerialShell)) as SerialShell,
+    new SimpleCommandParserC(),
+    PlatformSerialC,
+    MainC;
 
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+  SerialShell.UartStream -> PlatformSerialC;
+  SerialShell.CommandLineParser -> SimpleCommandParserC;
+  SerialShell.Init <- MainC.SoftwareInit;
 
+  ShellOutput = SerialShell.ShellOutput;
+  CommandList = SerialShell.CommandList;
 
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
-  components BusyShellCmdC, CancelmeShellCmdC;
-
-  WIRE_SHELL_COMMAND("busy", BusyShellCmdC, SerialShell);
-  WIRE_SHELL_COMMAND("cancelme", CancelmeShellCmdC, SerialShell);
+  ShellCommand = SerialShell.ShellCommand;
+  ShellExecute = SerialShell.ShellExecute;
 }
