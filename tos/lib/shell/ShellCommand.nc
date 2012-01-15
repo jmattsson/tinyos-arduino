@@ -33,9 +33,4 @@
 interface ShellCommand
 {
   command const char *getCommandString ();
-
-  command error_t execute (uint8_t argc, const char *argv[]);
-  command void abort ();
-
-  event void executeDone (error_t result);
 }

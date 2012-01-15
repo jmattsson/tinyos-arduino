@@ -33,28 +33,11 @@
 generic module ShellCommandC(const char commandString[])
 {
   provides interface ShellCommand;
-
-  uses interface ShellExecute;
 }
 implementation
 {
   command const char *ShellCommand.getCommandString ()
   {
     return commandString;
-  }
-
-  command error_t ShellCommand.execute (uint8_t argc, const char *argv[])
-  {
-    return call ShellExecute.execute (argc, argv);
-  }
-
-  command void ShellCommand.abort ()
-  {
-    call ShellExecute.abort ();
-  }
-
-  event void ShellExecute.executeDone (error_t result)
-  {
-    signal ShellCommand.executeDone (result);
   }
 }

@@ -33,12 +33,11 @@
 #ifndef _SHELL_COMMAND_H_
 #define _SHELL_COMMAND_H_
 
-#define DECLARE_SHELL_COMMAND(cmdstring, component, shell) \
+#define WIRE_SHELL_COMMAND(cmdstring, component, shell) \
     enum { SHELL_CMD_ ## component = unique("shell.cmd." #shell) }; \
     components new ShellCommandC (cmdstring) as ShellCommand_ ## component; \
-    components component; \
-    ShellCommand_ ## component .ShellExecute -> component; \
     shell.ShellCommand[SHELL_CMD_ ## component] -> ShellCommand_ ## component; \
+    shell.ShellExecute[SHELL_CMD_ ## component] -> component; \
     shell.ShellOutput[SHELL_CMD_ ## component] <- component
 
 #define NUM_COMMANDS_FOR_SHELL(shell) uniqueCount("shell.cmd." #shell)
