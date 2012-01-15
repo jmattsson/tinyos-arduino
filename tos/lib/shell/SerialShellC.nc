@@ -45,7 +45,8 @@ implementation
   enum { ABORT_KEY = 0x03 }; // ctrl-c
 
   typedef enum {
-    PROMPT_BARE, PROMPT_OK, PROMPT_BUSY, PROMPT_FAIL, PROMPT_ABORT
+    PROMPT_BARE, PROMPT_OK, PROMPT_BUSY, PROMPT_FAIL, PROMPT_ABORT,
+    PROMPT_UNKNOWN, PROMPT_SYNTAX
   } prompt_t;
 
   uint8_t cur_cmd = NO_CMD;
@@ -72,7 +73,9 @@ implementation
       "OK\r\n# ",
       "BUSY\r\n# ",
       "FAILED\r\n# ",
-      "^C\r\n# "
+      "^C\r\n# ",
+      "UNKNOWN\r\n# ",
+      "SYNTAX ERROR\r\n# "
     };
     const char *prompt = prompts[type];
 
@@ -166,7 +169,7 @@ implementation
 
       if (i == num_cmds)
       {
-        print_prompt (PROMPT_FAIL); // command not found
+        print_prompt (PROMPT_UNKNOWN); // command not found
         goto unlock_buffer;
       }
       else
@@ -184,7 +187,7 @@ implementation
       return;
     }
     else
-      print_prompt (PROMPT_FAIL);
+      print_prompt (PROMPT_SYNTAX);
 
   unlock_buffer:
     atomic buffer_locked = FALSE;
