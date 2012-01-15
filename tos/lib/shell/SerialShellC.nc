@@ -30,28 +30,40 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-
 generic module SerialShellC(uint8_t num_cmds)
 {
   provides interface Init;
   provides interface ShellOutput[uint8_t id];
 
   uses interface ShellCommand[uint8_t id];
-  uses interface ShellCommandParser;
+  uses interface CommandLineParser;
   uses interface UartStream;
 }
 implementation
 {
   enum { NO_CMD = 0xff };
-
-  uint8_t cur_cmd = NO_CMD;
-  bool printing_prompt = FALSE;
+  enum { ABORT_KEY = 0x03 }; // ctrl-c
 
   typedef enum {
     PROMPT_BARE, PROMPT_OK, PROMPT_BUSY, PROMPT_FAIL, PROMPT_ABORT
   } prompt_t;
+
+  uint8_t cur_cmd = NO_CMD;
+  bool printing_prompt = FALSE;
+  bool buffer_locked = FALSE;
+
+  #ifndef SERIAL_SHELL_BUFFER_SIZE
+  #define SERIAL_SHELL_BUFFER_SIZE 80
+  #endif
+
+  char recv_buf[SERIAL_SHELL_BUFFER_SIZE] = { 0 };
+  char *rx = recv_buf;
+
+  #ifndef SERIAL_SHELL_MAX_ARGS
+  #define SERIAL_SHELL_MAX_ARGS 9
+  #endif
+
+  char *argv[SERIAL_SHELL_MAX_ARGS];
 
   void print_prompt (prompt_t type)
   {
@@ -105,62 +117,18 @@ implementation
     if (id != cur_cmd)
       return; // not our execute
     cur_cmd = NO_CMD;
-    call ShellCommandParser.releaseArgs ();
+    atomic buffer_locked = FALSE;
     print_prompt (error_to_prompt (result));
   }
 
-  event void ShellCommandParser.parseCompleted(uint8_t argc, const char *argv[])
-  {
-    uint8_t i;
 
-    if (!argc || !*argv[0]) // no command, just reprint prompt
-    {
-      print_prompt (PROMPT_BARE);
-      goto release_args;
-    }
-
-    for (i = 0; i < num_cmds; ++i)
-    {
-      if (strcmp (argv[0], call ShellCommand.getCommandString[i] ()) == 0)
-        break;
-    }
-
-    if (i == num_cmds)
-    {
-      print_prompt (PROMPT_FAIL); // command not found
-      goto release_args;
-    }
-    else
-    {
-      error_t result;
-      cur_cmd = i;
-      result = call ShellCommand.execute[i] (argc, argv);
-      if (result != SUCCESS)
-      {
-        cur_cmd = NO_CMD;
-        print_prompt (error_to_prompt (result));
-        goto release_args;
-      }
-    }
-    return;
-
-  release_args:
-    call ShellCommandParser.releaseArgs ();
-  }
-
-  event void ShellCommandParser.parseFailed ()
-  {
-    print_prompt (PROMPT_FAIL);
-  }
-
-  event void ShellCommandParser.abortRequested ()
+  task void abort_requested ()
   {
     if (cur_cmd != NO_CMD)
       call ShellCommand.abort[cur_cmd] ();
     else
       print_prompt (PROMPT_ABORT);
   }
-
 
   task void output_done ()
   {
@@ -174,6 +142,56 @@ implementation
         signal ShellOutput.outputDone[cur_cmd] ();
   }
 
+  task void parse_command ()
+  {
+    uint8_t argc = SERIAL_SHELL_MAX_ARGS;
+    error_t res =
+      call CommandLineParser.parse (recv_buf, &argc, argv);
+
+    atomic rx = recv_buf;
+
+    if (res == SUCCESS)
+    {
+      uint8_t i;
+
+      if (!argc || !*argv[0]) // no command, just reprint prompt
+      {
+        print_prompt (PROMPT_BARE);
+        goto unlock_buffer;
+      }
+
+      for (i = 0; i < num_cmds; ++i)
+      {
+        if (strcmp (argv[0], call ShellCommand.getCommandString[i] ()) == 0)
+          break;
+      }
+
+      if (i == num_cmds)
+      {
+        print_prompt (PROMPT_FAIL); // command not found
+        goto unlock_buffer;
+      }
+      else
+      {
+        error_t result;
+        cur_cmd = i;
+        result = call ShellCommand.execute[i] (argc, (const char **)argv);
+        if (result != SUCCESS)
+        {
+          cur_cmd = NO_CMD;
+          print_prompt (error_to_prompt (result));
+          goto unlock_buffer;
+        }
+      }
+      return;
+    }
+    else
+      print_prompt (PROMPT_FAIL);
+
+  unlock_buffer:
+    atomic buffer_locked = FALSE;
+  }
+
 
   async event void UartStream.sendDone (uint8_t *buf, uint16_t len, error_t res)
   {
@@ -184,7 +202,46 @@ implementation
 
   async event void UartStream.receivedByte (uint8_t byte)
   {
-     call ShellCommandParser.inputByte (byte);
+    atomic {
+      if (byte == ABORT_KEY)
+      {
+        rx = recv_buf;
+        post abort_requested ();
+        return;
+      }
+
+      if (buffer_locked)
+        return;
+
+      if (byte == '\r' || byte == '\n')
+      {
+        *rx = 0;
+        buffer_locked = TRUE;
+        post parse_command ();
+        return;
+      }
+
+      if (byte < ' ' || byte == 0x7f)
+      {
+        switch (byte)
+        {
+          case 0x08: // Backspace
+          case 0x7f: // Delete
+            if (rx > recv_buf)
+              --rx;
+              // TODO: send " \b" to clear char
+            break;
+          case 0x15: // ctrl-u
+            rx = recv_buf;
+            // TODO: send "  ...\r" to clear line
+            break;
+          default: break;
+        }
+      }
+
+      if (rx < (recv_buf + sizeof (recv_buf) -1))
+        *rx++ = byte;
+    }
   }
 
 
@@ -193,7 +250,7 @@ implementation
     return "";
   }
 
-  default command error_t ShellCommand.execute[uint8_t id] (uint8_t argc, const char *argv[])
+  default command error_t ShellCommand.execute[uint8_t id] (uint8_t argc, const char *argv_[])
   {
     return FAIL;
   }

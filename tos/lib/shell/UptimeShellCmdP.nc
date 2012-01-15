@@ -30,6 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <stdio.h>
+
 module UptimeShellCmdP
 {
   provides interface ShellExecute;
