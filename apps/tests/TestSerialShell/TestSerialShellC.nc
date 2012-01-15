@@ -47,7 +47,7 @@ implementation
     PlatformSerialC;
 
   Shell.Init <- MainC.SoftwareInit;
-  Shell.ShellCommandParser -> SimpleCommandParserC;
+  Shell.CommandLineParser -> SimpleCommandParserC;
   Shell.UartStream -> PlatformSerialC;
 
   DECLARE_SHELL_COMMAND("uptime", UptimeShellCmdC, Shell);

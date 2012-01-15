@@ -30,48 +30,27 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+/**
+ * A simple command line parser, supporting double-quotes and backslash
+ * escapes. Only the <space> character is considered a delimiter.
+ */
 generic module SimpleCommandParserC()
 {
-  // TODO: turn this from a generic module into a parameterized interface,
-  //  and just duplicate the state rather than all the code
-  provides interface ShellCommandParser;
+  provides interface CommandLineParser;
 }
 implementation
 {
 
-  #ifndef SIMPLE_COMMAND_PARSER_BUF_SIZE
-  #define SIMPLE_COMMAND_PARSER_BUF_SIZE 128
-  #endif
-
-  #ifndef SIMPLE_COMMAND_PARSER_MAX_ARGS
-  #define SIMPLE_COMMAND_PARSER_MAX_ARGS 9
-  #endif
-
-  enum { ABORT_KEY = 0x03 }; // ctrl-c
-
-  char recv_buf[SIMPLE_COMMAND_PARSER_BUF_SIZE] = { 0 };
-  char *rx = recv_buf;
-
-  uint8_t argc;
-  const char *argv[SIMPLE_COMMAND_PARSER_MAX_ARGS +1];
-
-  bool buffer_locked = FALSE;
-
-  task void request_abort ()
+  command error_t CommandLineParser.parse (char *str, uint8_t *argc, char *argv[])
   {
-    signal ShellCommandParser.abortRequested ();
-  }
-
-  task void parse_command ()
-  {
+    uint8_t max_args = *argc;
     char *p;
     bool escaped = FALSE, inquote = FALSE, inspace = FALSE;
 
-    argc = 0;
-    memset (argv, 0, sizeof(argv));
-    argv[argc++] = recv_buf;
+    *argc = 0;
+    argv[(*argc)++] = str;
 
-    for (p = recv_buf; *p && argc <= SIMPLE_COMMAND_PARSER_MAX_ARGS; ++p)
+    for (p = str; *p && *argc < max_args; ++p)
     {
       if (escaped)
       {
@@ -87,7 +66,7 @@ implementation
       if (inspace && !escaped && *p != ' ')
       {
         inspace = FALSE;
-        argv[argc++] = p;
+        argv[*argc++] = p;
         continue;
       }
       if (*p == '\\')
@@ -102,64 +81,12 @@ implementation
       }
     }
 
-    if (escaped || inquote || *p)
-    {
-      call ShellCommandParser.releaseArgs ();
-      signal ShellCommandParser.parseFailed ();
-    }
+    if (escaped || inquote)
+      return EINVAL;
+    else if (*p)
+      return ENOMEM;
     else
-      signal ShellCommandParser.parseCompleted (argc, argv);
-  }
-
-
-  command void ShellCommandParser.releaseArgs ()
-  {
-    atomic {
-      rx = recv_buf;
-      *rx = 0;
-      buffer_locked = FALSE;
-    }
-  }
-
-  async command void ShellCommandParser.inputByte (uint8_t byte)
-  {
-    atomic {
-
-      if (byte == ABORT_KEY)
-      {
-        rx = recv_buf;
-        post request_abort ();
-        return;
-      }
-
-      if (!buffer_locked && (byte == '\r' || byte == '\n'))
-      {
-        *rx = 0;
-        buffer_locked = TRUE;
-        post parse_command ();
-        return;
-      }
-
-      if (byte < ' ' || byte == 0x7f)
-      {
-        switch (byte)
-        {
-          case 0x08: // Backspace
-          case 0x7f: // Delete
-            if (rx > recv_buf)
-              --rx;
-            break;
-          case 0x15: // ctrl-u
-            rx = recv_buf;
-            break;
-          default: break;
-        }
-        return;
-      }
-
-      if (!buffer_locked && (rx < (recv_buf + sizeof(recv_buf) -1)))
-        *rx++ = byte;
-    }
+      return SUCCESS;
   }
 
 }

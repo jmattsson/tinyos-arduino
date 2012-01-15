@@ -30,14 +30,17 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-interface ShellCommandParser
+interface CommandLineParser
 {
-  // FIXME - these two should be moved to an InteractiveLineBuffer instead
-  async command void inputByte (uint8_t byte);
-  event void abortRequested ();
-
-  event void parseFailed ();
-  event void parseCompleted (uint8_t argc, const char *argv[]);
-
-  command void releaseArgs ();
+  /**
+   * Parses the contents of a zero-terminated character buffer, splitting it
+   * into arguments and building up an argc/argv pair.
+   *
+   * @param str Pointer to the string to parse. MUST be zero-terminated.
+   * @param argc In: contains the length of the argv array.
+   *   Out: number of entries used in argv.
+   * @param argv The argv array, to receive the argument pointers.
+   * @return SUCCESS if the string could be parsed.
+   */
+  command error_t parse (char *str, uint8_t *argc, char *argv[]);
 }
