@@ -51,9 +51,11 @@ implementation
     PROMPT_UNKNOWN, PROMPT_SYNTAX
   } prompt_t;
 
+  prompt_t new_prompt;
+
   uint8_t cur_cmd = NO_CMD;
   bool printing_prompt = FALSE;
-  bool buffer_locked = FALSE;
+  volatile bool buffer_locked = FALSE;
 
   #ifndef SERIAL_SHELL_BUFFER_SIZE
   #define SERIAL_SHELL_BUFFER_SIZE 80
@@ -97,6 +99,16 @@ implementation
     }
   }
 
+  task void cmd_exit ()
+  {
+    print_prompt (new_prompt);
+    if (!printing_prompt)
+    {
+      post cmd_exit ();
+      return;
+    }
+  }
+
   command error_t Init.init ()
   {
     return call UartStream.enableReceiveInterrupt ();
@@ -121,9 +133,9 @@ implementation
   {
     if (id != cur_cmd)
       return; // not our execute
-    cur_cmd = NO_CMD;
-    atomic buffer_locked = FALSE;
-    print_prompt (error_to_prompt (result));
+
+    new_prompt = error_to_prompt (result);
+    post cmd_exit ();
   }
 
 
@@ -141,6 +153,7 @@ implementation
     {
       printing_prompt = FALSE;
       cur_cmd = NO_CMD;
+      atomic buffer_locked = FALSE;
     }
     else
       if (cur_cmd != NO_CMD)
@@ -159,8 +172,8 @@ implementation
 
       if (!argc || !*argv[0]) // no command, just reprint prompt
       {
-        print_prompt (PROMPT_BARE);
-        goto unlock_buffer;
+        new_prompt = PROMPT_BARE;
+        goto no_run;
       }
 
       for (i = 0; i < num_cmds; ++i)
@@ -170,29 +183,22 @@ implementation
       }
 
       if (i == num_cmds)
-      {
-        print_prompt (PROMPT_UNKNOWN); // command not found
-        goto unlock_buffer;
-      }
+        new_prompt = PROMPT_UNKNOWN; // command not found
       else
       {
         error_t result;
         cur_cmd = i;
         result = call ShellExecute.execute[i] (argc, (const char **)argv);
-        if (result != SUCCESS)
-        {
-          cur_cmd = NO_CMD;
-          print_prompt (error_to_prompt (result));
-          goto unlock_buffer;
-        }
+        if (result == SUCCESS)
+          return; // now running a command
+        new_prompt = error_to_prompt (result);
       }
-      return;
     }
     else
-      print_prompt (PROMPT_SYNTAX);
+      new_prompt = PROMPT_SYNTAX;
 
-  unlock_buffer:
-    atomic buffer_locked = FALSE;
+  no_run:
+    post cmd_exit ();
   }
 
 
