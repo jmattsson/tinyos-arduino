@@ -71,6 +71,16 @@ module TestP {
     call VPool.release (a2);
     assert_available (POOL_SIZE);
 
+    // Test releasing a null pointer
+    call VPool.release (0);
+    assert_available (POOL_SIZE);
+
+    a1 = call VPool.reserve (&l1);
+    call VPool.release (0);
+    ASSERT_EQUAL_PTR(call VPool.reserve (&l2), NULL);
+    call VPool.release (a1);
+    assert_available (POOL_SIZE);
+
     ALL_TESTS_PASSED();
   }
 }

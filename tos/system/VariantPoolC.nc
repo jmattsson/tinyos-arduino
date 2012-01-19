@@ -208,7 +208,7 @@ implementation
 
     dump_free_list("release-in");
 
-    if (node)
+    if (p)
       link (node);
 
     dump_free_list("release-out");
