@@ -31,11 +31,13 @@
  */
 
 #include "Atm328pAdc.h"
+#include <avr/power.h>
 
 module HplAtm328pAdcP
 {
   provides interface HplAtm328pAdc as Adc;
   provides interface StdControl;
+  uses interface McuPowerState;
 }
 implementation
 {
@@ -54,9 +56,13 @@ implementation
 
   command error_t StdControl.start ()
   {
-    // TODO: power management, also should auto-disable during sleep (p258).
+    // TODO: better power management, should auto-disable during sleep (p258).
+
+    power_adc_enable ();
 
     ADCSRA |= _BV(ADEN);
+
+    call McuPowerState.update ();
 
     return SUCCESS;
   }
@@ -67,6 +73,9 @@ implementation
       return FAIL;
 
     ADCSRA &= ~_BV(ADEN);
+
+    power_adc_disable ();
+    call McuPowerState.update ();
 
     return SUCCESS;
   }

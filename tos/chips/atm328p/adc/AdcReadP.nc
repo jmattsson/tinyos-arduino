@@ -38,9 +38,9 @@ configuration AdcReadP
 }
 implementation
 {
-  components Atm328pAdcC as AdcC, AdcInitP, RealMainP;
+  components Atm328pAdcC as AdcC, AdcInitP, PlatformP;
   AdcInitP.AdcControl -> AdcC;
-  AdcInitP.PlatformInit <- RealMainP.PlatformInit;
+  AdcInitP.PlatformInit <- PlatformP.PlatformInit;
 
   components new ArbitratedReadC (uint16_t);
   ArbitratedReadC.Resource -> AdcC;

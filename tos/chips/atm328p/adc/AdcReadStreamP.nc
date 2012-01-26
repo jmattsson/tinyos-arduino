@@ -40,9 +40,9 @@ configuration AdcReadStreamP
 }
 implementation
 {
-  components Atm328pAdcC as AdcC, AdcInitStreamP, RealMainP, HplAtm328pTimer1C;
+  components Atm328pAdcC as AdcC, AdcInitStreamP, PlatformP, HplAtm328pTimer1C;
   AdcInitStreamP.AdcControl -> AdcC;
-  AdcInitStreamP.PlatformInit <- RealMainP.PlatformInit;
+  AdcInitStreamP.PlatformInit <- PlatformP.PlatformInit;
   AdcInitStreamP.StreamTimer -> HplAtm328pTimer1C;
 
   components
