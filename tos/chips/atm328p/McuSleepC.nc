@@ -45,15 +45,29 @@ module McuSleepC
 implementation
 {
 
-  norace bool dirty = TRUE;
+  bool dirty = TRUE;
   mcu_power_t mode;
+
+#define POWERED_ON(module) (!(PRR & _BV(module)))
 
   void update_power_mode ()
   {
-    mcu_power_t mp = call McuPowerOverride.lowestState ();
-    // FIXME - check power reg for which components are active, and adjust
-    // mp accordingly
-    mode = mp;
+    mcu_power_t mp = ATM328P_POWER_DOWN;
+
+    // If timer 0 or 1 is active, can only IDLE
+    if (POWERED_ON(PRTIM0) || POWERED_ON(PRTIM1))
+      mp = ATM328P_POWER_IDLE;
+    // ...same with usart, two-wire and spi
+    else if (POWERED_ON(PRUSART0) || POWERED_ON(PRTWI) || POWERED_ON(PRSPI))
+      mp = ATM328P_POWER_IDLE;
+    // ...but the adc can be used in noise reduction mode
+    else if (POWERED_ON(PRADC))
+      mp = ATM328P_POWER_ADC_NOISERED;
+    // ... and timer 2 is functional all the way down in power-save
+    else if (POWERED_ON(PRTIM2))
+      mp = ATM328P_POWER_SAVE;
+
+    mode = combine_mcu_power_t (mp, call McuPowerOverride.lowestState ());
   }
 
   command error_t Init.init ()
@@ -108,7 +122,6 @@ implementation
 
   default async command mcu_power_t McuPowerOverride.lowestState ()
   {
-    return ATM328P_POWER_IDLE;
-    //return ATM328P_POWER_DOWN;
+    return ATM328P_POWER_DOWN;
   }
 }
