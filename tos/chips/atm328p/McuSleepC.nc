@@ -30,21 +30,85 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <avr/sleep.h>
+#include <avr/power.h>
 
-module McuSleepC {
-  provides {
+module McuSleepC
+{
+  provides
+  {
+    interface Init @exactlyonce();
     interface McuSleep;
     interface McuPowerState;
   }
+  uses interface McuPowerOverride;
 }
-implementation {
-  async command void McuSleep.sleep() {
-    sei ();
-    sleep_mode ();
-    asm ("" : : : "memory");
-    cli ();
+implementation
+{
+
+  norace bool dirty = TRUE;
+  mcu_power_t mode;
+
+  void update_power_mode ()
+  {
+    mcu_power_t mp = call McuPowerOverride.lowestState ();
+    // FIXME - check power reg for which components are active, and adjust
+    // mp accordingly
+    mode = mp;
   }
 
-  async command void McuPowerState.update() {
+  command error_t Init.init ()
+  {
+    // Switch off power to all I/O modules. Any modules actually used will
+    // re-enable power to themselves at init/start time.
+
+    // The ADC must be disabled before powered off
+    ADCSRA &= ~_BV(ADEN);
+
+    power_all_disable ();
+
+    return SUCCESS;
+  }
+
+  async command void McuSleep.sleep ()
+  {
+    uint8_t sreg;
+    uint8_t sm;
+
+    if (dirty)
+      update_power_mode ();
+
+    switch (mode)
+    {
+      case ATM328P_POWER_IDLE:         sm = SLEEP_MODE_IDLE; break;
+      case ATM328P_POWER_ADC_NOISERED: sm = SLEEP_MODE_ADC; break;
+      case ATM328P_POWER_EXT_STANDBY:  sm = SLEEP_MODE_EXT_STANDBY; break;
+      case ATM328P_POWER_SAVE:         sm = SLEEP_MODE_PWR_SAVE; break;
+      case ATM328P_POWER_STANDBY:      sm = SLEEP_MODE_STANDBY; break;
+      default:
+      case ATM328P_POWER_DOWN:         sm = SLEEP_MODE_PWR_DOWN; break;
+    }
+
+    set_sleep_mode (sm);
+    sleep_enable ();
+
+    sreg = SREG;
+
+    sleep_bod_disable(); // TODO: make this optional
+    sei ();
+    asm ("sleep" ::: "memory"); // sleep_cpu() lacks needed "memory" clobber
+    sleep_disable ();
+
+    SREG = sreg;
+  }
+
+  async command void McuPowerState.update ()
+  {
+    dirty = TRUE;
+  }
+
+  default async command mcu_power_t McuPowerOverride.lowestState ()
+  {
+    return ATM328P_POWER_IDLE;
+    //return ATM328P_POWER_DOWN;
   }
 }

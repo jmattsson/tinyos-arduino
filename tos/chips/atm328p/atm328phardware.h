@@ -37,11 +37,13 @@
 
 typedef uint8_t __nesc_atomic_t;
 
-inline void __nesc_enable_interrupt() {
+inline void __nesc_enable_interrupt()
+{
     sei ();
 }
 
-inline void __nesc_disable_interrupt() {
+inline void __nesc_disable_interrupt()
+{
     cli ();
 }
 
@@ -70,6 +72,21 @@ inline void __nesc_atomic_end (__nesc_atomic_t old_SREG)
 #define AVR_NONATOMIC_HANDLER(signame) \
     void signame () __attribute__((interrupt)) @hwevent() @C()
  */
+
+
+typedef enum {
+  ATM328P_POWER_IDLE,
+  ATM328P_POWER_ADC_NOISERED,
+  ATM328P_POWER_EXT_STANDBY,
+  ATM328P_POWER_SAVE,
+  ATM328P_POWER_STANDBY,
+  ATM328P_POWER_DOWN
+} __attribute__((packed)) mcu_power_t @combine("combine_mcu_power_t");
+
+inline mcu_power_t combine_mcu_power_t (mcu_power_t mp1, mcu_power_t mp2)
+{
+  return (mp1 < mp2) ? mp1 : mp2;
+}
 
 #define SFR_BIT_SET(reg, bit) \
     asm ("sbi %0, %1" : : "I" (reg - __SFR_OFFSET), "I" (bit) )
