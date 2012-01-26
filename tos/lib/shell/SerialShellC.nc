@@ -39,6 +39,7 @@ generic module SerialShellC(uint8_t num_cmds)
   uses interface ShellCommand[uint8_t id];
   uses interface ShellExecute[uint8_t id];
   uses interface CommandLineParser;
+  uses interface StdControl;
   uses interface UartStream;
 }
 implementation
@@ -111,7 +112,8 @@ implementation
 
   command error_t Init.init ()
   {
-    return call UartStream.enableReceiveInterrupt ();
+    error_t res = call StdControl.start ();
+    return ecombine (res, call UartStream.enableReceiveInterrupt ());
   }
 
  

@@ -53,6 +53,7 @@ implementation
     PlatformSerialC,
     MainC;
 
+  SerialShell.StdControl -> PlatformSerialC;
   SerialShell.UartStream -> PlatformSerialC;
   SerialShell.CommandLineParser -> SimpleCommandParserC;
   SerialShell.Init <- MainC.SoftwareInit;
