@@ -31,11 +31,13 @@
  */
 
 #include <Atm328pTimerConfig.h>
+#include <avr/power.h>
 
 module HplAtm328pTimer1P
 {
     provides interface HplAtm328pTimer<uint16_t> as Timer;
     provides interface Init as PlatformInit;
+    uses interface McuPowerState;
 }
 implementation
 {
@@ -76,6 +78,8 @@ implementation
 
     async command void Timer.start ()
     {
+        power_timer1_enable ();
+
         // clear clock source
         TCCR1B &= ~CLOCK_SOURCE_TIMER_1_gm;
 
@@ -87,6 +91,8 @@ implementation
 
         // enable the chosen clock source
         TCCR1B |= (ATM328P_TIMER_1_CLOCK << CS10);
+
+        call McuPowerState.update ();
     }
 
 
@@ -94,6 +100,9 @@ implementation
     {
         // clear clock source
         TCCR1B &= ~CLOCK_SOURCE_TIMER_1_gm;
+
+        power_timer1_disable ();
+        call McuPowerState.update ();
     }
 
     command error_t PlatformInit.init ()
