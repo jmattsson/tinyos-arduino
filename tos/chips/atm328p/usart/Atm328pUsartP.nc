@@ -30,6 +30,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <avr/power.h>
+
 module Atm328pUsartP
 {
   provides
@@ -48,6 +50,7 @@ module Atm328pUsartP
     interface StdControl      as HplTxControl;
     interface BusyWait<TMicro, uint16_t>;
     interface Atm328pUsartConfig;
+    interface McuPowerState;
   }
 }
 implementation
@@ -85,6 +88,11 @@ implementation
     return TRUE;
   }
 
+#define USART_POWER_CHECK() \
+  do { \
+    if (PRR & _BV(PRUSART0)) \
+      return EOFF; \
+  } while (0)
 
 ////// UartError /////////////////////////////////////////////////////
 
@@ -96,7 +104,13 @@ implementation
   command error_t StdControl.start ()
   {
     error_t res;
+
+    if (!(PRR & _BV(PRUSART0)))
+      return SUCCESS; // already started
+
     call StdControl.stop ();
+
+    power_usart0_enable ();
 
     res = call HplUsartInit.init ();
     if (res != SUCCESS)
@@ -105,16 +119,27 @@ implementation
     call HplTxControl.start ();
     call HplRxControl.start ();
 
+    call McuPowerState.update ();
+
     return SUCCESS;
   }
 
   command error_t StdControl.stop ()
   {
+    if (PRR & _BV(PRUSART0))
+      return SUCCESS; // already stopped
+
     atomic {
       if (tx.buf)
+      {
         signal UartStream.sendDone (tx.buf, tx.len, FAIL);
+        tx.buf = 0;
+      }
       if (rx.buf)
+      {
         signal UartStream.receiveDone (rx.buf, rx.len, FAIL);
+        rx.buf = 0;
+      }
 
       // Note: we don't care about an outstanding flush request; If that's in
       // use, they should know better than the shut down the chip early!
@@ -125,7 +150,10 @@ implementation
 
       call HplRxControl.stop ();
       call HplTxControl.stop ();
-    
+
+      power_usart0_disable ();
+      call McuPowerState.update ();
+
       return SUCCESS;
     }
   }
@@ -134,6 +162,7 @@ implementation
 
   async command error_t UartStream.send (uint8_t *buf, uint16_t len)
   {
+    USART_POWER_CHECK();
     atomic {
       if (tx.buf)
         return FAIL;
@@ -150,6 +179,7 @@ implementation
 
   async command error_t UartStream.enableReceiveInterrupt ()
   {
+    USART_POWER_CHECK();
     atomic {
       if (rx.buf)
         return FAIL;
@@ -162,6 +192,7 @@ implementation
 
   async command error_t UartStream.disableReceiveInterrupt ()
   {
+    USART_POWER_CHECK();
     atomic {
       if (!byte_receive_enabled)
         return FAIL;
@@ -174,6 +205,7 @@ implementation
 
   async command error_t UartStream.receive (uint8_t *buf, uint16_t len)
   {
+    USART_POWER_CHECK();
     atomic {
       if (rx.buf || byte_receive_enabled)
         return FAIL;
@@ -199,6 +231,7 @@ implementation
 
   async command error_t UartByte.send (uint8_t byte)
   {
+    USART_POWER_CHECK();
     if (!call HplUsart.txEmpty ())
       return FAIL;
 
@@ -217,6 +250,7 @@ implementation
 
     atm328p_usart_config_t *cfg = call Atm328pUsartConfig.getConfig ();
 
+    USART_POWER_CHECK();
     if (!cfg)
       return FAIL;
 
@@ -257,6 +291,8 @@ implementation
 
   command void SerialFlush.flush ()
   {
+    if (PRR & _BV(PRUSART0))
+      return; // EOFF
     call HplUsart.enableTxcInterrupt ();
     atomic notify_flush = TRUE;
   }

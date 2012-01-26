@@ -90,7 +90,6 @@ implementation
     return SUCCESS;
   }
 
-  // TODO: power state handling
   command error_t RxControl.start ()
   {
     UCSR0B |= (1 << RXEN0);

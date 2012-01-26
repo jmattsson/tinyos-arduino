@@ -40,8 +40,12 @@ configuration Atm328pUsartC
     interface SerialFlush;
   }
 
-  uses interface BusyWait<TMicro, uint16_t>;
-  uses interface Atm328pUsartConfig;
+  uses
+  {
+    interface BusyWait<TMicro, uint16_t>;
+    interface Atm328pUsartConfig;
+    interface McuPowerState;
+  }
 }
 implementation
 {
@@ -53,6 +57,7 @@ implementation
   SerialFlush = Atm328pUsartP;
 
   BusyWait = Atm328pUsartP;
+  McuPowerState = Atm328pUsartP;
   Atm328pUsartConfig = Atm328pUsartP;
   Atm328pUsartConfig = HplAtm328pUsartP;
 
