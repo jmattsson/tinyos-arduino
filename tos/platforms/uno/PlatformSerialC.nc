@@ -49,7 +49,8 @@ implementation
   UartByte    = Usart;
   SerialFlush = Usart;
 
-  components BusyWaitMicroC, PlatformUsartConfigC;
+  components BusyWaitMicroC, McuSleepC, PlatformUsartConfigC;
   Usart.BusyWait -> BusyWaitMicroC;
+  Usart.McuPowerState -> McuSleepC;
   Usart.Atm328pUsartConfig -> PlatformUsartConfigC;
 }

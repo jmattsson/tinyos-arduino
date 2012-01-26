@@ -51,5 +51,5 @@ implementation
   Led2 = NoPinC;
 
   components PlatformP;
-  Init = PlatformP.LedsInit;
+  Init = PlatformP.PlatformInit;
 }

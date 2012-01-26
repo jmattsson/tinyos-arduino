@@ -33,14 +33,16 @@
 module PlatformP
 {
   provides interface Init;
-  uses interface Init as LedsInit;
+  uses interface Init as McuInit;
+  uses interface Init as PlatformInit;
 }
 implementation
 {
   command error_t Init.init ()
   {
-    return call LedsInit.init ();
+    error_t res = call McuInit.init ();
+    return ecombine (res, call PlatformInit.init ());
   }
 
-  default command error_t LedsInit.init () { return SUCCESS; }
+  default command error_t PlatformInit.init () { return SUCCESS; }
 }
