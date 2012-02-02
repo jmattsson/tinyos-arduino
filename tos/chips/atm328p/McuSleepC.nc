@@ -45,7 +45,7 @@ module McuSleepC
 implementation
 {
 
-  bool dirty = TRUE;
+  norace volatile bool dirty = TRUE;
   mcu_power_t mode;
 
 #define POWERED_ON(module) (!(PRR & _BV(module)))
