@@ -30,47 +30,31 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "Atm328pAdc.h"
-
-configuration Atm328pAdcC
+/**
+ * This component implements a deferred power policy for the ADC.
+ * When included, it automatically powers off the ADC when usused for
+ * a certain time period (determined by ATM328P_ADC_POWER_OFF_DELAY, by
+ * default two seconds). See TEP115 for details on power policies.
+ *
+ * Note: Due to interplay between the power manager and platform initialization
+ * the power policy does not take effect until after the ADC has been used
+ * once. This should not present an issue however, since if the ADC components
+ * aren't included the ADC is powered off anyway.
+ */
+configuration Atm328pAdcPowerC
 {
-  provides
-  {
-    interface StdControl;
-
-    interface ReadNow<uint16_t>[uint8_t id];
-    interface Resource[uint8_t];
-
-    interface Read<uint16_t>[uint8_t id];
-    interface ReadStream<uint16_t>[uint8_t id];
-
-    interface ArbiterInfo;
-    interface ResourceDefaultOwner;
-  }
-  uses interface AdcConfigure<const Atm328pAdcConfig_t *>[uint8_t id];
 }
 implementation
 {
-  components Atm328pAdcP as AdcP;
-  components new RoundRobinArbiterC(UQ_ATM328P_ADC_HAL) as Arbiter;
-  AdcP.Resource -> Arbiter;
 
-  components HplAtm328pAdcP;
-  AdcP.Adc -> HplAtm328pAdcP;
+#ifndef ATM328P_ADC_POWER_OFF_DELAY
+#define ATM328P_ADC_POWER_OFF_DELAY 2048
+#endif
 
-  components Atm328pAlarms1C;
-  AdcP.Alarm -> Atm328pAlarms1C.Alarm[1]; // Note: has to be COMP B (Alarm[1])
+  components Atm328pAdcC as AdcC;
+  components new StdControlDeferredPowerManagerC(ATM328P_ADC_POWER_OFF_DELAY) as PowerMgrC;
 
-  components McuSleepC;
-  HplAtm328pAdcP.McuPowerState -> McuSleepC;
-
-  StdControl = HplAtm328pAdcP;
-  ReadNow = AdcP;
-  Resource = Arbiter;
-  Read = AdcP;
-  ReadStream = AdcP;
-  ArbiterInfo = Arbiter;
-  ResourceDefaultOwner = Arbiter;
-
-  AdcP.AdcConfigure = AdcConfigure;
+  PowerMgrC.StdControl -> AdcC;
+  PowerMgrC.ResourceDefaultOwner -> AdcC;
+  PowerMgrC.ArbiterInfo -> AdcC;
 }
