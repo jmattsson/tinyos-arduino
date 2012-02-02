@@ -56,8 +56,6 @@ implementation
 
   command error_t StdControl.start ()
   {
-    // TODO: better power management, should auto-disable during sleep (p258).
-
     power_adc_enable ();
 
     ADCSRA |= _BV(ADEN);

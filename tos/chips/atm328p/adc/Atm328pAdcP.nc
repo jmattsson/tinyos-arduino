@@ -70,6 +70,11 @@ implementation
   bool read_stream_done_pending;
   bool read_stream_failed;
 
+#define ADC_POWER_CHECK() \
+  do { \
+    if (PRR & _BV(PRADC)) \
+      return EOFF; \
+  } while (0)
 
   void apply_configuration (const Atm328pAdcConfig_t *cfg)
   {
@@ -122,6 +127,7 @@ implementation
 
   command error_t Read.read[uint8_t id] ()
   {
+    ADC_POWER_CHECK();
     atomic {
       if (op != ATM328P_ADC_NONE || call Adc.isConverting ())
         return EBUSY;
@@ -139,6 +145,7 @@ implementation
 
   async command error_t ReadNow.read[uint8_t id] ()
   {
+    ADC_POWER_CHECK();
     atomic {
       if (!call Resource.isOwner[id] ())
         return FAIL;
@@ -158,6 +165,7 @@ implementation
 
   command error_t ReadStream.postBuffer[uint8_t id] (uint16_t *buf, uint16_t count)
   {
+    ADC_POWER_CHECK();
     /* TEP114 reserves enough space in a buffer to allow using it in a linked
      * list, but doesn't take the client id into account. Given the
      * implementation of ArbitratedReadStreamC, we need to store the client id
@@ -186,6 +194,7 @@ implementation
 
   command error_t ReadStream.read[uint8_t id] (uint32_t usPeriod)
   {
+    ADC_POWER_CHECK();
     atomic {
       if (op != ATM328P_ADC_NONE)
         return EBUSY;
