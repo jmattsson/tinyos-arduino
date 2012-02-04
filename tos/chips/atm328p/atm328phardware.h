@@ -88,14 +88,20 @@ inline mcu_power_t combine_mcu_power_t (mcu_power_t mp1, mcu_power_t mp2)
   return (mp1 < mp2) ? mp1 : mp2;
 }
 
-#define SFR_BIT_SET(reg, bit) \
-    asm ("sbi %0, %1" : : "I" (reg - __SFR_OFFSET), "I" (bit) )
 
-#define SFR_BIT_CLR(reg, bit) \
-    asm ("cbi %0, %1" : : "I" (reg - __SFR_OFFSET), "I" (bit) )
+// Adjust register accesses to allow the compiler to use short instructions
+// (cbi/sbi/in/out) rather than the standard load/store ops (lds/sts).
+// By default register accesses use the memory-mapped version of the register.
+#define OPTIMAL_ACCESS(reg) \
+  _MMIO_BYTE(_SFR_IO_REG_P(reg) ? _SFR_IO_ADDR(reg) : _SFR_MEM_ADDR(reg))
 
-#define SFR_BIT_READ(reg, bit) \
-    ((*((uint8_t *)(reg - __SFR_OFFSET)) & _BV(bit)) != 0)
+// Write
+#define SFR_SET_BIT(reg, bit)  OPTIMAL_ACCESS(reg) |= _BV(bit)
+#define SFR_CLR_BIT(reg, bit)  OPTIMAL_ACCESS(reg) &= ~_BV(bit)
+
+// Read
+#define SFR_BIT_SET(reg, bit) ((OPTIMAL_ACCESS(reg) & _BV(bit)))
+#define SFR_BIT_CLR(reg, bit) (!SFR_BIT_SET(reg,bit))
 
 #define UQ_TIMER_0_ALARM "atm328p.timer0.alarm"
 #define UQ_TIMER_1_ALARM "atm328p.timer1.alarm"
