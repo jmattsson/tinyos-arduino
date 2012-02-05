@@ -30,16 +30,14 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <Atm328pTimerConfig.h>
-
-configuration HplAtm328pTimer0C
+configuration HplAtm328pPowerC
 {
-  provides interface HplAtm328pTimer<uint8_t>;
+  provides interface HplAtm328pPower;
 }
 implementation
 {
-  components HplAtm328pTimer0P, PlatformP, HplAtm328pPowerC;
-  HplAtm328pTimer0P.PlatformInit <- PlatformP.PlatformInit;
-  HplAtm328pTimer0P.HplAtm328pPower -> HplAtm328pPowerC;
-  HplAtm328pTimer = HplAtm328pTimer0P;
+  components HplAtm328pPowerP, McuSleepC;
+  HplAtm328pPowerP.McuPowerState -> McuSleepC;
+
+  HplAtm328pPower = HplAtm328pPowerP;
 }

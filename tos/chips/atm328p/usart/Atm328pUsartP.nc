@@ -50,6 +50,7 @@ module Atm328pUsartP
     interface StdControl      as HplTxControl;
     interface BusyWait<TMicro, uint16_t>;
     interface Atm328pUsartConfig;
+    interface HplAtm328pPower as HplPower;
     interface McuPowerState;
   }
 }
@@ -90,7 +91,7 @@ implementation
 
 #define USART_POWER_CHECK() \
   do { \
-    if (PRR & _BV(PRUSART0)) \
+    if (!call HplPower.isUsartPowered ()) \
       return EOFF; \
   } while (0)
 
@@ -105,7 +106,7 @@ implementation
   {
     error_t res;
 
-    if (!(PRR & _BV(PRUSART0)))
+    if (call HplPower.isUsartPowered ())
       return SUCCESS; // already started
 
     call StdControl.stop ();
@@ -126,7 +127,7 @@ implementation
 
   command error_t StdControl.stop ()
   {
-    if (PRR & _BV(PRUSART0))
+    if (!call HplPower.isUsartPowered ())
       return SUCCESS; // already stopped
 
     atomic {
@@ -291,7 +292,7 @@ implementation
 
   command void SerialFlush.flush ()
   {
-    if (PRR & _BV(PRUSART0))
+    if (!call HplPower.isUsartPowered ())
       return; // EOFF
     call HplUsart.enableTxcInterrupt ();
     atomic notify_flush = TRUE;

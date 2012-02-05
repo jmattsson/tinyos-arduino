@@ -57,14 +57,15 @@ implementation
 
   components HplAtm328pAdcP;
   AdcP.Adc -> HplAtm328pAdcP;
+  AdcP.AdcControl -> HplAtm328pAdcP;
 
   components Atm328pAlarms1C;
   AdcP.Alarm -> Atm328pAlarms1C.Alarm[1]; // Note: has to be COMP B (Alarm[1])
 
-  components McuSleepC;
-  HplAtm328pAdcP.McuPowerState -> McuSleepC;
+  components HplAtm328pPowerC;
+  AdcP.HplPower -> HplAtm328pPowerC;
 
-  StdControl = HplAtm328pAdcP;
+  StdControl = AdcP;
   ReadNow = AdcP;
   Resource = Arbiter;
   Read = AdcP;

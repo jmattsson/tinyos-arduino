@@ -36,6 +36,7 @@ module Atm328pAdcP
 {
   provides
   {
+    interface StdControl;
     interface Read<uint16_t>[uint8_t id];
     interface ReadNow<uint16_t>[uint8_t id];
     interface ReadStream<uint16_t>[uint8_t id];
@@ -46,6 +47,8 @@ module Atm328pAdcP
     interface AdcConfigure<const Atm328pAdcConfig_t *>[uint8_t id];
     interface Resource[uint8_t id];
     interface HplAtm328pAdc as Adc;
+    interface StdControl as AdcControl;
+    interface HplAtm328pPower as HplPower;
     interface Alarm<ATM328P_TIMER_1_PRECISION_TYPE, uint16_t>;
   }
 }
@@ -72,7 +75,7 @@ implementation
 
 #define ADC_POWER_CHECK() \
   do { \
-    if (PRR & _BV(PRADC)) \
+    if (!call HplPower.isAdcPowered ()) \
       return EOFF; \
   } while (0)
 
@@ -124,6 +127,28 @@ implementation
     atomic alarm_dt = usActualPeriod << ATM328P_TIMER_1_MICRO_DOWNSCALE;
   }
 
+
+  command error_t StdControl.start ()
+  {
+    if (call HplPower.isAdcPowered ())
+      return SUCCESS;
+
+    call HplPower.powerOnAdc ();
+    return call AdcControl.start ();
+  }
+
+  command error_t StdControl.stop ()
+  {
+    error_t res;
+    if (!call HplPower.isAdcPowered ())
+      return SUCCESS;
+
+    res = call AdcControl.stop ();
+    if (res == SUCCESS)
+      call HplPower.powerOffAdc ();
+
+    return res;
+  }
 
   command error_t Read.read[uint8_t id] ()
   {

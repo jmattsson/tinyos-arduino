@@ -37,7 +37,7 @@ module HplAtm328pTimer0P
 {
     provides interface HplAtm328pTimer<uint8_t> as Timer;
     provides interface Init as PlatformInit;
-    uses interface McuPowerState;
+    uses interface HplAtm328pPower;
 }
 implementation
 {
@@ -66,19 +66,19 @@ implementation
 
     async command bool Timer.test ()
     {
-        return TIFR0 & (1 << TOV0);
+        return SFR_BIT_SET(TIFR0, TOV0);
     }
 
 
     async command void Timer.clear ()
     {
-        TIFR0 |= (1 << TOV0);
+        TIFR0 = _BV(TOV0);
     }
 
 
     async command void Timer.start ()
     {
-        power_timer0_enable ();
+        call HplAtm328pPower.powerOnTimer0 ();
 
         // clear clock source
         TCCR0B &= ~CLOCK_SOURCE_TIMER_0_gm;
@@ -87,12 +87,10 @@ implementation
         call Timer.set (0);
 
         // enable overflow interrupts
-        TIMSK0 |= (1 << TOIE1);
+        SFR_SET_BIT(TIMSK0, TOIE0);
 
         // enable the chosen clock source
         TCCR0B |= (ATM328P_TIMER_0_CLOCK << CS00);
-
-        call McuPowerState.update ();
     }
 
 
@@ -101,8 +99,7 @@ implementation
         // clear clock source
         TCCR0B &= ~CLOCK_SOURCE_TIMER_0_gm;
 
-        power_timer0_disable ();
-        call McuPowerState.update ();
+        call HplAtm328pPower.powerOffTimer0 ();
     }
 
     command error_t PlatformInit.init ()

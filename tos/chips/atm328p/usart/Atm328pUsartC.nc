@@ -49,7 +49,7 @@ configuration Atm328pUsartC
 }
 implementation
 {
-  components Atm328pUsartP, HplAtm328pUsartP;
+  components Atm328pUsartP, HplAtm328pUsartP, HplAtm328pPowerC;
 
   StdControl = Atm328pUsartP;
   UartStream = Atm328pUsartP;
@@ -65,4 +65,5 @@ implementation
   Atm328pUsartP.HplRxControl -> HplAtm328pUsartP.RxControl;
   Atm328pUsartP.HplTxControl -> HplAtm328pUsartP.TxControl;
   Atm328pUsartP.HplUsart -> HplAtm328pUsartP;
+  Atm328pUsartP.HplPower -> HplAtm328pPowerC;
 }

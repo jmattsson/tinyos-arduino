@@ -30,16 +30,33 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <Atm328pTimerConfig.h>
+interface HplAtm328pPower
+{
+  async command void powerOnAdc ();
+  async command void powerOffAdc ();
+  async command bool isAdcPowered ();
 
-configuration HplAtm328pTimer0C
-{
-  provides interface HplAtm328pTimer<uint8_t>;
-}
-implementation
-{
-  components HplAtm328pTimer0P, PlatformP, HplAtm328pPowerC;
-  HplAtm328pTimer0P.PlatformInit <- PlatformP.PlatformInit;
-  HplAtm328pTimer0P.HplAtm328pPower -> HplAtm328pPowerC;
-  HplAtm328pTimer = HplAtm328pTimer0P;
+  async command void powerOnUsart ();
+  async command void powerOffUsart ();
+  async command bool isUsartPowered ();
+
+  async command void powerOnSpi ();
+  async command void powerOffSpi ();
+  async command bool isSpiPowered ();
+
+  async command void powerOnTwi ();
+  async command void powerOffTwi ();
+  async command bool isTwiPowered ();
+
+  async command void powerOnTimer0 ();
+  async command void powerOffTimer0 ();
+  async command bool isTimer0Powered ();
+
+  async command void powerOnTimer1 ();
+  async command void powerOffTimer1 ();
+  async command bool isTimer1Powered ();
+
+  async command void powerOnTimer2 ();
+  async command void powerOffTimer2 ();
+  async command bool isTimer2Powered ();
 }

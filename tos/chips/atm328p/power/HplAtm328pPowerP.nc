@@ -30,16 +30,40 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <Atm328pTimerConfig.h>
-
-configuration HplAtm328pTimer0C
+module HplAtm328pPowerP
 {
-  provides interface HplAtm328pTimer<uint8_t>;
+  provides interface HplAtm328pPower;
+  uses interface McuPowerState;
 }
 implementation
 {
-  components HplAtm328pTimer0P, PlatformP, HplAtm328pPowerC;
-  HplAtm328pTimer0P.PlatformInit <- PlatformP.PlatformInit;
-  HplAtm328pTimer0P.HplAtm328pPower -> HplAtm328pPowerC;
-  HplAtm328pTimer = HplAtm328pTimer0P;
+
+#define MAKE_POWER_ACCESSORS(name, bit) \
+  async command void HplAtm328pPower.powerOn ## name () \
+  { \
+    SFR_CLR_BIT(PRR, bit); \
+    call McuPowerState.update (); \
+  } \
+  \
+  async command void HplAtm328pPower.powerOff ## name () \
+  { \
+    SFR_SET_BIT(PRR, bit); \
+    call McuPowerState.update (); \
+  } \
+  \
+  async command bool HplAtm328pPower.is ## name ## Powered () \
+  { \
+    return SFR_BIT_CLR(PRR, bit); \
+  } \
+  \
+
+  MAKE_POWER_ACCESSORS(Adc, PRADC)
+  MAKE_POWER_ACCESSORS(Usart, PRUSART0)
+  MAKE_POWER_ACCESSORS(Spi, PRSPI)
+  MAKE_POWER_ACCESSORS(Twi, PRTWI)
+  MAKE_POWER_ACCESSORS(Timer0, PRTIM0)
+  MAKE_POWER_ACCESSORS(Timer1, PRTIM1)
+  MAKE_POWER_ACCESSORS(Timer2, PRTIM2)
+
+#undef MAKE_POWER_ACCESSORS
 }
