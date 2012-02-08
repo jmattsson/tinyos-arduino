@@ -42,43 +42,69 @@ generic module HelpShellCmdP()
 implementation
 {
   char *buf = 0;
+  uint8_t id;
 
-  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  enum { END_OF_HELP = 0xff };
+
+  task void printHelp ()
   {
     size_t len = 0;
-    uint8_t id = 0;
     char *p;
     int ret;
+    error_t res;
 
-    if (buf)
-      return EBUSY;
-
+    call Scratch.release (buf); // grab a larger buffer if available
     buf = p = call Scratch.reserve (&len);
 
     while (len)
     {
-      const char *str = call ShellCommand.getCommandString[id++] ();
+      const char *str = call ShellCommand.getCommandString[id] ();
       if (!str || !*str)
+      {
+        id = END_OF_HELP;
         break;
+      }
 
       ret = snprintf (p, len, "%s\r\n", str);
       if (ret <= 0 || (ret > len))
         break;
 
+      ++id;
       len -= ret;
       p += ret;
     }
 
     call Scratch.reduce (buf, p - buf);
-    return call ShellOutput.output (buf, p - buf);
+    res = call ShellOutput.output (buf, p - buf);
+    if (res != SUCCESS)
+    {
+      call Scratch.release (buf);
+      signal ShellExecute.executeDone (res);
+    }
+  }
+
+  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  {
+    if (buf)
+      return EBUSY;
+
+    id = 0;
+    post printHelp ();
+
+    return SUCCESS;
   }
 
   command void ShellExecute.abort () {}
 
   event void ShellOutput.outputDone ()
   {
-    call Scratch.release (buf);
-    buf = 0;
-    signal ShellExecute.executeDone (SUCCESS);
+    if (id != END_OF_HELP)
+      post printHelp();
+    else
+    {
+      call Scratch.release (buf);
+      buf = 0;
+      signal ShellExecute.executeDone (SUCCESS);
+    }
   }
 }
