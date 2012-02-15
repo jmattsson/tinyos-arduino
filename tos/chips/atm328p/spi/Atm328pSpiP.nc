@@ -59,6 +59,41 @@ module Atm328pSpiP
 }
 implementation
 {
+  norace struct
+  {
+    uint8_t *tx;
+    uint8_t *rx;
+    size_t len;
+    size_t offs;
+  } trans = { 0, 0, 0, 0 };
+
+#ifndef SPI_PACKET_SIZE
+#define SPI_PACKET_SIZE 32
+#endif
+
+  task void spi_xfer ()
+  {
+    size_t i;
+    for (i = 0; ((trans.offs + i) < trans.len) && (i < SPI_PACKET_SIZE); ++i)
+    {
+      uint8_t tmp;
+      *(trans.rx ? &trans.rx[trans.offs + i] : &tmp) =
+        call SpiByte.write (trans.tx ? trans.tx[trans.offs +i] : 0);
+    }
+    trans.offs += i;
+    if (trans.offs == trans.len)
+    {
+      uint8_t *tx = trans.tx, *rx = trans.rx;
+      i = trans.len;
+      trans.tx = trans.rx = 0;
+      atomic trans.len = trans.offs = 0;
+
+      signal SpiPacket.sendDone (tx, rx, i, SUCCESS);
+    }
+    else
+      post spi_xfer ();
+  }
+
   inline void wait_for_spi_byte ()
   {
     while (!call HplSpi.interruptPending ()) {}
@@ -139,19 +174,17 @@ implementation
 
   async command error_t SpiPacket.send (uint8_t *txBuf, uint8_t *rxBuf, uint16_t len)
   {
-    // FIXME: make this a chunked transfer, using the interrupt to kick off
-    // the next chunk.
-    // For now, we use the dead-simple approach, and signal the async done 
-    // straight from in here.
-    uint8_t *tx = txBuf, *rx = rxBuf;
-    uint16_t i;
-    for (i = 0; i < len; ++i)
-    {
-      uint8_t tmp;
-      *(rxBuf ? rx++ : &tmp) = call SpiByte.write (txBuf ? *tx++ : 0);
+    atomic {
+      if (trans.len)
+        return EBUSY;
+
+      trans.tx = txBuf;
+      trans.rx = rxBuf,
+      trans.len = len;
+      trans.offs = 0;
+      post spi_xfer ();
+      return SUCCESS;
     }
-    signal SpiPacket.sendDone (txBuf, rxBuf, len, SUCCESS);
-    return SUCCESS;
   }
 
 
@@ -218,9 +251,8 @@ implementation
 
   default event void Resource.granted[uint8_t id] () {}
 
+  default async event void SpiPacket.sendDone (uint8_t *tx, uint8_t *xx, uint16_t l, error_t r) {}
 
-  async event void HplSpi.transferComplete ()
-  {
-    // FIXME - use this for chunked transfer
-  }
+
+  async event void HplSpi.transferComplete () {}
 }
