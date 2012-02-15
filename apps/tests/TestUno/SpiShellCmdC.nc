@@ -29,23 +29,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "ShellCommand.h"
-
-configuration TestUnoC
+configuration SpiShellCmdC
 {
+  provides interface ShellExecute;
+  uses interface ShellOutput;
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+  components SpiShellCmdP, PlatformSpiC as SpiC, ScratchAreaC;
 
+  SpiShellCmdP.SpiByte -> SpiC;
+  SpiShellCmdP.SpiPacket -> SpiC;
+  SpiShellCmdP.FastSpiByte -> SpiC;
 
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
+  SpiShellCmdP.Scratch -> ScratchAreaC;
 
-  components AdcShellCmdC, SpiShellCmdC;
-
-  WIRE_SHELL_COMMAND("adc", AdcShellCmdC, SerialShell);
-  WIRE_SHELL_COMMAND("spi", SpiShellCmdC, SerialShell);
+  ShellExecute = SpiShellCmdP;
+  ShellOutput  = SpiShellCmdP;
 }
