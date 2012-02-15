@@ -1,0 +1,15 @@
+PLATFORM=etherten
+
+PROGRAMMER?= avrdude
+ARDUINO?= /dev/ttyACM0
+DEFAULT_PROGRAM_AVR=arduino
+
+ifeq ($(PROGRAMMER),avrdude)
+  PROGRAMMER_PART ?= -pm328p
+endif
+
+$(call TOSMake_include_platform,avr)
+
+etherten: $(BUILD_DEPS)
+    @:
+
