@@ -29,24 +29,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "ShellCommand.h"
-
-configuration TestUnoC
+configuration GpioShellCmdC
 {
+  provides interface ShellExecute;
+  uses interface ShellOutput;
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+  components GpioShellCmdP as CmdP, ArduinoPinsC;
 
+  CmdP.Digital -> ArduinoPinsC.Digital;
+  CmdP.Analog  -> ArduinoPinsC.Analog;
 
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
-
-  components AdcShellCmdC, SpiShellCmdC, GpioShellCmdC;
-
-  WIRE_SHELL_COMMAND("adc",  AdcShellCmdC, SerialShell);
-  WIRE_SHELL_COMMAND("spi",  SpiShellCmdC, SerialShell);
-  WIRE_SHELL_COMMAND("gpio",GpioShellCmdC, SerialShell);
+  ShellExecute = CmdP;
+  ShellOutput  = CmdP;
 }
