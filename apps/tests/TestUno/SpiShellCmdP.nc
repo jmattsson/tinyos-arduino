@@ -41,7 +41,6 @@ module SpiShellCmdP
   uses
   {
     interface ShellOutput;
-    // FIXME - resource handling?
     interface SpiByte;
     interface SpiPacket;
     interface FastSpiByte;
