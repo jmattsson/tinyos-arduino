@@ -10,4 +10,6 @@ typedef enum
   ATM328P_SPI_CLOCK_DIV_128 = 3,
 } atm328p_spi_clock_div_t;
 
+#define UQ_SPI "atm328p.spi"
+
 #endif

@@ -29,28 +29,88 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "ShellCommand.h"
-#include "Atm328pSpi.h"
-
-configuration TestUnoC
+generic module ResourceShellCmdC()
 {
+  provides
+  {
+    interface ShellExecute;
+  }
+  uses
+  {
+    interface ShellOutput;
+    interface Resource;
+  }
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+  const char syntax[] =
+    " imm\r\n"
+    " req\r\n"
+    " rel\r\n"
+  ;
+
+  bool waiting = FALSE;
+
+  task void done ()
+  {
+    signal ShellExecute.executeDone (SUCCESS);
+  }
+
+  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  {
+    error_t res;
+
+    if (argc == 1)
+      return call ShellOutput.output (syntax, sizeof (syntax) -1);
+
+    if (argc != 2)
+      return EINVAL;
+
+    if (strcmp (argv[1], "imm") == 0)
+    {
+      res = call Resource.immediateRequest ();
+      if (res == SUCCESS)
+        post done ();
+      return res;
+    }
+    else if (strcmp (argv[1], "req") == 0)
+    {
+      waiting = TRUE;
+      return call Resource.request ();
+    }
+    else if (strcmp (argv[1], "rel") == 0)
+    {
+      res = call Resource.release ();
+      if (res == SUCCESS)
+        post done ();
+      return res;
+    }
+    else
+      return FAIL;
+  }
+
+  command void ShellExecute.abort ()
+  {
+    waiting = FALSE;
+    signal ShellExecute.executeDone (ECANCEL);
+  }
 
 
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
+  event void ShellOutput.outputDone ()
+  {
+    signal ShellExecute.executeDone (SUCCESS);
+  }
 
-  components AdcShellCmdC, SpiShellCmdC, GpioShellCmdC;
-  components new ResourceShellCmdC() as SpiResourceShellCmdC, PlatformSpiC;
-  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(UQ_SPI)];
+  event void Resource.granted ()
+  {
+    if (!waiting)
+    {
+      // wait cancelled, just release the resource again
+      call Resource.release ();
+      return;
+    }
 
-  WIRE_SHELL_COMMAND("adc",    AdcShellCmdC,         SerialShell);
-  WIRE_SHELL_COMMAND("spi",    SpiShellCmdC,         SerialShell);
-  WIRE_SHELL_COMMAND("gpio",   GpioShellCmdC,        SerialShell);
-  WIRE_SHELL_COMMAND("spibus", SpiResourceShellCmdC, SerialShell);
+    waiting = FALSE;
+    signal ShellExecute.executeDone (SUCCESS);
+  }
 }
