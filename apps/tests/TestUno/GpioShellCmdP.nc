@@ -44,8 +44,6 @@ module GpioShellCmdP
 }
 implementation
 {
-  enum { SPI_CMD_NONE, SPI_CMD_PKT, SPI_CMD_FAST } op = SPI_CMD_NONE;
-
   const char syntax[] =
     " out <pin>\r\n"
     " in <pin>\r\n"
@@ -185,17 +183,17 @@ implementation
     if (!parse_pin (argv[2], &pin))
       return EINVAL;
 
-    if (strcmp (argv[1], "out") == 0 && argc == 3)
+    if (strcmp (argv[1], "out") == 0)
       return make_out_pin (&pin);
-    else if (strcmp (argv[1], "in") == 0 && argc == 3)
+    else if (strcmp (argv[1], "in") == 0)
       return make_in_pin (&pin);
-    else if (strcmp (argv[1], "set") == 0 && argc == 3)
+    else if (strcmp (argv[1], "set") == 0)
       return set_pin (&pin);
-    else if (strcmp (argv[1], "get") == 0 && argc == 3)
+    else if (strcmp (argv[1], "get") == 0)
       return get_pin (&pin);
-    else if (strcmp (argv[1], "clr") == 0 && argc == 3)
+    else if (strcmp (argv[1], "clr") == 0)
       return clr_pin (&pin);
-    else if (strcmp (argv[1], "tgl") == 0 && argc == 3)
+    else if (strcmp (argv[1], "tgl") == 0)
       return tgl_pin (&pin);
     else
       return FAIL;
