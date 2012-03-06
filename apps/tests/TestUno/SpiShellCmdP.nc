@@ -99,7 +99,7 @@ implementation
 
     ++p;
     if (*p)
-      d2 = hexdigit (*p++);
+      d2 = hexdigit (*p);
     else
       return p;
     if (d2 == 0xff)
@@ -171,6 +171,7 @@ implementation
           return EINVAL;
         }
         pkt.data[i] = byte;
+        data += 2;
       }
 
       res = call SpiPacket.send (pkt.data, pkt.data, pkt.len);
@@ -184,6 +185,11 @@ implementation
     return SUCCESS;
   }
 
+  task void no_command_output ()
+  {
+    signal ShellExecute.executeDone (SUCCESS);
+  }
+
   error_t spi_fast_w (const char *data)
   {
     uint8_t byte;
@@ -191,6 +197,7 @@ implementation
     if (p != (data + 2))
       return FAIL;
     call FastSpiByte.splitWrite (byte);
+    post no_command_output ();
     return SUCCESS;
   }
 
