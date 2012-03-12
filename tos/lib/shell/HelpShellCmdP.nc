@@ -66,7 +66,7 @@ implementation
       }
 
       ret = snprintf (p, len, "%s\r\n", str);
-      if (ret <= 0 || (ret > len))
+      if (ret <= 0 || (ret >= len))
         break;
 
       ++id;
