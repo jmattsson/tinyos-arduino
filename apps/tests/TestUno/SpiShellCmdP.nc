@@ -116,7 +116,7 @@ implementation
     if (nibble < 10)
       return '0' + nibble;
     else if (nibble < 16)
-      return 'a' + nibble;
+      return 'a' + nibble - 10;
     else
       return '?';
   }
@@ -249,6 +249,7 @@ implementation
     atomic {
       for (i = 0; i < pkt.len; ++i)
         hexfmt (buf + 2*i, pkt.data[i]);
+      i *= 2;
       buf[i++] = '\r';
       buf[i++] = '\n';
 
