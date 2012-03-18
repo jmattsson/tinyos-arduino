@@ -103,9 +103,9 @@ implementation
   {
     if (is_master)
     {
-      call SS.makeOutput ();
-      call SCK.makeOutput ();
-      call MOSI.makeOutput ();
+      call SS.makeOutput ();   call SS.set ();
+      call SCK.makeOutput ();  call SCK.clr ();
+      call MOSI.makeOutput (); call MOSI.clr ();
       call MISO.makeInput ();
     }
     else
@@ -113,7 +113,7 @@ implementation
       call SS.makeInput ();
       call SCK.makeInput ();
       call MOSI.makeInput ();
-      call MISO.makeOutput ();
+      call MISO.makeOutput (); call MISO.clr ();
     }
   }
 
