@@ -38,43 +38,43 @@ implementation
 {
   async command bool GeneralIO.get ()
   {
-    return SFR_BIT_SET (_SFR_IO8 (port), bit);
+    return SFR_BIT_SET (_SFR_MEM8 (port), bit);
   }
 
   async command void GeneralIO.set ()
   {
-    SFR_SET_BIT ( _SFR_IO8(port), bit);
+    SFR_SET_BIT ( _SFR_MEM8(port), bit);
   }
 
   async command void GeneralIO.clr ()
   {
-    SFR_CLR_BIT ( _SFR_IO8(port), bit);
+    SFR_CLR_BIT ( _SFR_MEM8(port), bit);
   }
 
   async command void GeneralIO.toggle ()
   {
-    SFR_SET_BIT (_SFR_IO8(pin), bit);
+    SFR_SET_BIT (_SFR_MEM8(pin), bit);
   }
 
   // Note: Might need to go via intermediate state (see doc8271, p79)
   // when changing pin direction under certain conditions
   async command void GeneralIO.makeInput ()
   {
-    SFR_CLR_BIT (_SFR_IO8(dir), bit);
+    SFR_CLR_BIT (_SFR_MEM8(dir), bit);
   }
 
   async command void GeneralIO.makeOutput ()
   {
-    SFR_SET_BIT (_SFR_IO8(dir), bit);
+    SFR_SET_BIT (_SFR_MEM8(dir), bit);
   }
 
   async command bool GeneralIO.isInput ()
   {
-    return SFR_BIT_CLR (_SFR_IO8(dir), bit);
+    return SFR_BIT_CLR (_SFR_MEM8(dir), bit);
   }
 
   async command bool GeneralIO.isOutput ()
   {
-    return SFR_BIT_SET (_SFR_IO8(dir), bit);
+    return SFR_BIT_SET (_SFR_MEM8(dir), bit);
   }
 }
