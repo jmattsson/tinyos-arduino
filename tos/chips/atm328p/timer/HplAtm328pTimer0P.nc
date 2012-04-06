@@ -36,7 +36,7 @@
 module HplAtm328pTimer0P
 {
     provides interface HplAtm328pTimer<uint8_t> as Timer;
-    provides interface Init as PlatformInit;
+    provides interface Init;
     uses interface HplAtm328pPower;
 }
 implementation
@@ -102,7 +102,7 @@ implementation
         call HplAtm328pPower.powerOffTimer0 ();
     }
 
-    command error_t PlatformInit.init ()
+    command error_t Init.init ()
     {
         call Timer.start ();
         return SUCCESS;

@@ -38,8 +38,8 @@ configuration HplAtm328pTimer0C
 }
 implementation
 {
-  components HplAtm328pTimer0P, PlatformP, HplAtm328pPowerC;
-  HplAtm328pTimer0P.PlatformInit <- PlatformP.PlatformInit;
+  components HplAtm328pTimer0P, McuInitP, HplAtm328pPowerC;
+  HplAtm328pTimer0P.Init <- McuInitP.IoModuleInit;
   HplAtm328pTimer0P.HplAtm328pPower -> HplAtm328pPowerC;
   HplAtm328pTimer = HplAtm328pTimer0P;
 }

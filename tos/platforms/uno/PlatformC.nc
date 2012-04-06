@@ -34,8 +34,8 @@ configuration PlatformC {
   provides interface Init;
 }
 implementation {
-  components PlatformP, McuSleepC;
-  PlatformP.McuInit -> McuSleepC;
+  components PlatformP, McuInitC;
+  PlatformP.McuInit -> McuInitC;
   Init = PlatformP.Init;
 }
 

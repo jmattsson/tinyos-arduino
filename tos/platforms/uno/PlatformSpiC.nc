@@ -42,9 +42,7 @@ configuration PlatformSpiC
 }
 implementation
 {
-  components Atm328pSpiC as SpiC, PlatformP;
-
-  SpiC.Init <- PlatformP.PlatformInit;
+  components Atm328pSpiC as SpiC;
 
   SpiByte     = SpiC;
   SpiPacket   = SpiC;

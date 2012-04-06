@@ -34,7 +34,6 @@ configuration Atm328pSpiC
 {
   provides
   {
-    interface Init;
     interface SpiByte;
     interface SpiPacket;
     interface FastSpiByte;
@@ -44,12 +43,15 @@ configuration Atm328pSpiC
 implementation
 {
   components Atm328pSpiP, HplAtm328pSpiC, HplAtm328pPowerC,
-    new SimpleFcfsArbiterC ("Atm328p.Spi") as ArbiterC;
+    new SimpleArbiterP() as ArbiterP,
+    new FcfsResourceQueueC(uniqueCount(UQ_SPI)) as QueueC;
+
+  ArbiterP.Queue -> QueueC;
 
   Atm328pSpiP.SpiControl -> HplAtm328pSpiC;
   Atm328pSpiP.HplSpi     -> HplAtm328pSpiC;
   Atm328pSpiP.HplPower   -> HplAtm328pPowerC;
-  Atm328pSpiP.Arbiter    -> ArbiterC;
+  Atm328pSpiP.Arbiter    -> ArbiterP;
 
   components HplAtm328pGeneralIOC as IO;
   Atm328pSpiP.SS   -> IO.PortB2;
@@ -57,7 +59,10 @@ implementation
   Atm328pSpiP.MOSI -> IO.PortB3;
   Atm328pSpiP.MISO -> IO.PortB4;
 
-  Init        = Atm328pSpiP;
+  components McuInitP;
+  McuInitP.IoBusInit -> Atm328pSpiP;
+  McuInitP.IoBusInit -> QueueC;
+
   SpiByte     = Atm328pSpiP;
   SpiPacket   = Atm328pSpiP;
   FastSpiByte = Atm328pSpiP;
