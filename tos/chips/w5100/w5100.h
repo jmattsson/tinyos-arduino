@@ -31,6 +31,7 @@
  */
 
 #ifndef __W5100_H__
+#define __W5100_H__
 
 /**
  * Network byteorder IPv4 address type.
