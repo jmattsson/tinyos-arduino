@@ -42,15 +42,21 @@ implementation
 
   void reg_or8 (uint16_t reg, uint8_t val)
   {
-    val |= call Hw.in (reg);
-    call Hw.out (reg, val);
+    atomic
+    {
+      val |= call Hw.in (reg);
+      call Hw.out (reg, val);
+    }
   }
 
   void reg_mask8 (uint16_t reg, uint8_t val)
   {
-    val = ~val;
-    val &= call Hw.in (reg);
-    call Hw.out (reg, val);
+    atomic
+    {
+      val = ~val;
+      val &= call Hw.in (reg);
+      call Hw.out (reg, val);
+    }
   }
 
   async command void HplW5100.reset ()
