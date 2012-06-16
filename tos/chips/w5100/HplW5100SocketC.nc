@@ -81,18 +81,18 @@ implementation
     uint8_t hi, lo;
     atomic
     {
-      hi = reg_read8 (SOCKET_n_REG(reg_hi));
-      lo = reg_read8 (SOCKET_n_REG(reg_hi+1));
+      hi = reg_read8 (reg_hi);
+      lo = reg_read8 (reg_hi+1);
     }
-    return ((uint16_t)hi << 8 || lo);
+    return ((uint16_t)(hi << 8) | lo);
   }
 
   void reg_write16 (uint16_t reg_hi, uint16_t val)
   {
     atomic
     {
-      reg_write8 (SOCKET_n_REG(reg_hi), val >> 8);
-      reg_write8 (SOCKET_n_REG(reg_hi+1), val & 0xff);
+      reg_write8 (reg_hi, val >> 8);
+      reg_write8 (reg_hi + 1, val & 0xff);
     }
   }
 
