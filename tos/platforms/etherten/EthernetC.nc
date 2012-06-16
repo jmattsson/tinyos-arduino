@@ -36,13 +36,18 @@ configuration EthernetC
 implementation
 {
   components PlatformP, PlatformSpiC, HwW5100SpiC, ArduinoPinsC,
-    new Atm328pGpioInterrupt() as IrqC, HplAtm328pExtInterruptC as HplExtIrqC;
+    new Atm328pGpioInterruptC() as IrqC, HplAtm328pExtInterruptC as HplExtIrqC;
 
   IrqC.HplAtm328pIoInterrupt -> HplExtIrqC.Int0; // FIXME - verify
 
   HwW5100SpiC.FastSpiByte    -> PlatformSpiC;
   HwW5100SpiC.SS             -> ArduinoPinsC.Digital[10];
-  HwW5100SpiC.GpioInterrupt  -> Irq;
+  HwW5100SpiC.GpioInterrupt  -> IrqC;
+
+  components HplW5100C, SocketMemoryP;
+  HplW5100C.Hw      -> HwW5100SpiC;
+  SocketMemoryP.Hpl -> HplW5100C;
+  SocketMemoryP.Hw  -> HwW5100SpiC;
 
   // TODO: Check if enabling the w5100 interrupt at this point has any
   // unintended side-effects
