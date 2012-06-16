@@ -161,7 +161,7 @@ interface HplW5100
 
 
   /**
-   * Sets the interrupt mask. High bits enable interrupts.
+   * Sets the interrupt mask. Set bits enable interrupts.
    * @param mask the new mask.
    */
   async command void setInterruptMask (uint8_t mask);
