@@ -38,7 +38,7 @@ module HwW5100SpiC
   }
   uses
   {
-    interface Resource as SpiBus; // FIXME - push this up for performance!
+//    interface Resource as SpiBus; // FIXME - push this up for performance!
     interface GeneralIO as SS;
     interface FastSpiByte;
     interface GpioInterrupt;
