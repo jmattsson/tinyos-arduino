@@ -51,11 +51,13 @@ implementation
   async command error_t GpioInterrupt.enableRisingEdge ()
   {
     enable_as_rising (TRUE);
+    return SUCCESS;
   }
 
   async command error_t GpioInterrupt.enableFallingEdge ()
   {
     enable_as_rising (FALSE);
+    return SUCCESS;
   }
 
   async command error_t GpioInterrupt.disable ()
