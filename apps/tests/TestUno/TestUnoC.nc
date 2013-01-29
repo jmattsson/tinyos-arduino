@@ -47,7 +47,7 @@ implementation
 
   components AdcShellCmdC, SpiShellCmdC, GpioShellCmdC;
   components new ResourceShellCmdC() as SpiResourceShellCmdC, PlatformSpiC;
-  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(UQ_SPI)];
+  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(SPI_RESOURCE)];
 
   WIRE_SHELL_COMMAND("adc",    AdcShellCmdC,         SerialShell);
   WIRE_SHELL_COMMAND("spi",    SpiShellCmdC,         SerialShell);
