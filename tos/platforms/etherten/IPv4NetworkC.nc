@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Johny Mattsson
+ * Copyright (c) 2012-2013 Johny Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,51 +29,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-module IPv4AddressP
+configuration IPv4NetworkC
 {
-  provides interface IPv4Address;
-  uses interface HplW5100 as Hpl;
+  provides interface IPv4Network;
 }
 implementation
 {
-  command void IPv4Address.setAddress (in_addr_t addr)
-  {
-    in_addr_t old;
-    old = call Hpl.getIPv4Address ();
-    if (old != addr)
-    {
-      call Hpl.setIPv4Address (addr);
-      signal IPv4Address.changed ();
-    }
-  }
+  components IPv4NetworkP, HplW5100C, EthernetC;
+  IPv4NetworkP.Hpl -> HplW5100C;
+  IPv4NetworkP.Resource -> EthernetC.EthernetChip;
 
-  command in_addr_t IPv4Address.getAddress ()
-  {
-    return call Hpl.getIPv4Address ();
-  }
-
-
-  command void IPv4Address.setGateway (in_addr_t addr)
-  {
-    call Hpl.setGateway (addr);
-  }
-
-  command in_addr_t IPv4Address.getGateway ()
-  {
-    return call Hpl.getGateway ();
-  }
-
-
-  command void IPv4Address.setSubnetMask (in_addr_t mask)
-  {
-    call Hpl.setSubnetMask (mask);
-  }
-
-  command in_addr_t IPv4Address.getSubnetMask ()
-  {
-    return call Hpl.getSubnetMask ();
-  }
-
-
-  async event void Hpl.interrupt () {}
+  IPv4Network = IPv4NetworkP;
 }

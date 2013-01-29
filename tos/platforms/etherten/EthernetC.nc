@@ -29,12 +29,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "Atm328pSpi.h"
 configuration EthernetC
 {
-  // TODO: provides ...
+  // TODO: more provides
+  provides interface Resource as EthernetChip;
 }
 implementation
 {
+  enum { SPI_CLIENT_ID = unique(SPI_RESOURCE) };
+
   components PlatformP, PlatformSpiC, HwW5100SpiC, ArduinoPinsC,
     new Atm328pGpioInterruptC() as IrqC, HplAtm328pExtInterruptC as HplExtIrqC;
 
@@ -48,6 +52,8 @@ implementation
   HplW5100C.Hw      -> HwW5100SpiC;
   SocketMemoryP.Hpl -> HplW5100C;
   SocketMemoryP.Hw  -> HwW5100SpiC;
+
+  EthernetChip = PlatformSpiC.Resource[SPI_CLIENT_ID];
 
   // TODO: Check if enabling the w5100 interrupt at this point has any
   // unintended side-effects
