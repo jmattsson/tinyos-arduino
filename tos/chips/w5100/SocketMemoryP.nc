@@ -75,7 +75,7 @@ implementation
       hi = call Hw.in (reg_hi);
       lo = call Hw.in (reg_hi + 1);
     }
-    return ((uint16_t)(hi << 8) | lo);
+    return (((uint16_t)hi << 8) | lo);
   }
 
   void reg_write16 (uint16_t reg_hi, uint16_t val)
