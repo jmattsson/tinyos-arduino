@@ -36,22 +36,24 @@
 /**
  * Network byteorder IPv4 address type.
  */
-typedef nx_uint32_t in_addr_t;
+//typedef nx_uint32_t in_addr_t;
+#define in_addr_t nx_uint32_t
 
 /**
  * Byte-wise access to IPv4 address.
  */
-typedef union
+typedef nx_union
 {
-  in_addr_t s_addr;
-  uint8_t   s_addr8[4];
+  in_addr_t  s_addr;
+  nx_uint8_t s_addr8[4];
 } in_addr;
 
 
 /**
  * Network byteorder port type.
  */
-typedef nx_uint16_t in_port_t;
+//typedef nx_uint16_t in_port_t;
+#define in_port_t nx_uint16_t
 
 /**
  * MAC address type.

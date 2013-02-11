@@ -131,7 +131,8 @@ implementation
 
   async command void HplW5100.setGateway (in_addr_t gw)
   {
-    in_addr ia = { gw };
+    in_addr ia;
+    ia.s_addr = gw;
     call Hw.out (W5100_GAR0, ia.s_addr8[0]);
     call Hw.out (W5100_GAR1, ia.s_addr8[1]);
     call Hw.out (W5100_GAR2, ia.s_addr8[2]);
@@ -151,7 +152,8 @@ implementation
 
   async command void HplW5100.setSubnetMask (in_addr_t mask)
   {
-    in_addr ia = { mask };
+    in_addr ia;
+    ia.s_addr = mask;
     call Hw.out (W5100_SUBR0, ia.s_addr8[0]);
     call Hw.out (W5100_SUBR1, ia.s_addr8[1]);
     call Hw.out (W5100_SUBR2, ia.s_addr8[2]);
@@ -171,7 +173,8 @@ implementation
 
   async command void HplW5100.setIPv4Address (in_addr_t addr)
   {
-    in_addr ia = { addr };
+    in_addr ia;
+    ia.s_addr = addr;
     call Hw.out (W5100_SIPR0, ia.s_addr8[0]);
     call Hw.out (W5100_SIPR1, ia.s_addr8[1]);
     call Hw.out (W5100_SIPR2, ia.s_addr8[2]);
