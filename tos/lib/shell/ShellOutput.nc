@@ -34,7 +34,7 @@ interface ShellOutput
 {
   command error_t output (const char *str, size_t len);
 
-  // note: only signalled if outputn returned SUCCESS
+  // note: only signalled if output returned SUCCESS
   event void outputDone ();
 
   // maximum length output which can be successfully submitted
