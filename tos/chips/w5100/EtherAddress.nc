@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Johny Mattsson
+ * Copyright (c) 2012-2013 Johny Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,6 @@
 
 interface EtherAddress
 {
-  command void setAddress (mac_addr_t addr);
-  command mac_addr_t getAddress ();
+  command error_t setAddress (mac_addr_t addr);
+  command error_t getAddress (mac_addr_t *addr);
 }

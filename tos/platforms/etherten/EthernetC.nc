@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Johny Mattsson
+ * Copyright (c) 2012-2013 Johny Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 configuration EthernetC
 {
   // TODO: more provides
+  provides interface EtherAddress;
   provides interface Resource as EthernetChip;
 }
 implementation
@@ -54,6 +55,11 @@ implementation
   SocketMemoryP.Hw  -> HwW5100SpiC;
 
   EthernetChip = PlatformSpiC.Resource[SPI_CLIENT_ID];
+
+  components EtherAddressC;
+  EtherAddressC.Resource -> PlatformSpiC.Resource[SPI_CLIENT_ID];
+
+  EtherAddress = EtherAddressC;
 
   // TODO: Check if enabling the w5100 interrupt at this point has any
   // unintended side-effects

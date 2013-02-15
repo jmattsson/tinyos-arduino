@@ -32,6 +32,7 @@
 configuration EtherAddressC
 {
   provides interface EtherAddress;
+  uses interface Resource;
 }
 implementation
 {
@@ -39,4 +40,5 @@ implementation
   EtherAddressP.Hpl -> HplW5100C;
 
   EtherAddress = EtherAddressP;
+  Resource     = EtherAddressP;
 }

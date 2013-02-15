@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Johny Mattsson
+ * Copyright (c) 2012-2013 Johny Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,18 +33,60 @@ module EtherAddressP
 {
   provides interface EtherAddress;
   uses interface HplW5100 as Hpl;
+  uses interface Resource;
 }
 implementation
 {
-  command void EtherAddress.setAddress (mac_addr_t addr)
+  typedef struct
   {
-    call Hpl.setMacAddress (addr);
+    bool ours;
+  } resource_t;
+
+  error_t claim (resource_t *r)
+  {
+    error_t res = SUCCESS;
+    bool pre_owned = call Resource.isOwner ();
+    if (pre_owned)
+      r->ours = FALSE;
+    else
+    {
+      res = call Resource.immediateRequest ();
+      r->ours = (res == SUCCESS);
+    }
+    return res;
   }
 
-  command mac_addr_t EtherAddress.getAddress ()
+  void release (resource_t *r)
   {
-    return call Hpl.getMacAddress ();
+    if (r->ours)
+      call Resource.release ();
+    r->ours = FALSE;
+  }
+
+  command error_t EtherAddress.setAddress (mac_addr_t addr)
+  {
+    resource_t r;
+    error_t res = claim (&r);
+    if (res == SUCCESS)
+    {
+      call Hpl.setMacAddress (addr);
+      release (&r);
+    }
+    return res;
+  }
+
+  command error_t EtherAddress.getAddress (mac_addr_t *addr)
+  {
+    resource_t r;
+    error_t res = claim (&r);
+    if (res == SUCCESS)
+    {
+      *addr = call Hpl.getMacAddress ();
+      release (&r);
+    }
+    return res;
   }
 
   async event void Hpl.interrupt () {}
+  event void Resource.granted () {}
 }
