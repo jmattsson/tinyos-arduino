@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 Johny Mattsson
+ * Copyright (c) 2012-2013 Johny Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,6 @@ module HwW5100SpiC
   }
   uses
   {
-//    interface Resource as SpiBus; // FIXME - push this up for performance!
     interface GeneralIO as SS;
     interface FastSpiByte;
     interface GpioInterrupt;
@@ -56,7 +55,6 @@ implementation
 
   async command void HwW5100.out (uint16_t addr, uint8_t val)
   {
-    // FIXME - ensure SpiBus is acquired
     call SS.clr ();
     call FastSpiByte.splitWrite (0xf0);
     call FastSpiByte.splitReadWrite (addr >> 8);
@@ -69,12 +67,12 @@ implementation
   async command uint8_t HwW5100.in (uint16_t addr)
   {
     uint8_t val;
-    // FIXME - ensure SpiBus is acquired
     call SS.clr ();
     call FastSpiByte.splitWrite (0x0f);
     call FastSpiByte.splitReadWrite (addr >> 8);
     call FastSpiByte.splitReadWrite (addr & 0xff);
-    val = call FastSpiByte.splitReadWrite (0);
+    call FastSpiByte.splitReadWrite (0);
+    val = call FastSpiByte.splitRead ();
     call SS.set ();
     return val;
   }
