@@ -42,7 +42,7 @@ implementation
   {
     in_addr addr;
     unsigned a = 0, b = 0, c = 0, d = 0;
-    sscanf ("%u.%u.%u.%u", arg, &a, &b, &c, &d);
+    sscanf (arg, "%u.%u.%u.%u", &a, &b, &c, &d);
     addr.s_addr8[0] = a;
     addr.s_addr8[1] = b;
     addr.s_addr8[2] = c;
