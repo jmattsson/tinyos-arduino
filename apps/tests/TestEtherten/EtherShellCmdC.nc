@@ -29,34 +29,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "ShellCommand.h"
-#include "Atm328pSpi.h"
-
-configuration TestEthertenC
+configuration EtherShellCmdC
 {
+  provides interface ShellExecute;
+  uses interface ShellOutput;
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+  components EtherShellCmdP, EtherAddressC, ScratchAreaC;
+  EtherShellCmdP.EtherAddress -> EtherAddressC;
+  EtherShellCmdP.Scratch -> ScratchAreaC;
 
-
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
-
-  components SpiShellCmdC, GpioShellCmdC;
-  components new ResourceShellCmdC() as SpiResourceShellCmdC, PlatformSpiC;
-  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(SPI_RESOURCE)];
-
-  WIRE_SHELL_COMMAND("spi",    SpiShellCmdC,         SerialShell);
-  WIRE_SHELL_COMMAND("gpio",   GpioShellCmdC,        SerialShell);
-  WIRE_SHELL_COMMAND("spibus", SpiResourceShellCmdC, SerialShell);
-
-  components IPv4NetworkShellCmdC, IPv4NetworkC;
-  IPv4NetworkShellCmdC.IPv4Network -> IPv4NetworkC;
-  WIRE_SHELL_COMMAND("ip", IPv4NetworkShellCmdC, SerialShell);
-
-  components EtherShellCmdC;
-  WIRE_SHELL_COMMAND("ether", EtherShellCmdC, SerialShell);
+  ShellExecute = EtherShellCmdP.ShellExecute;
+  ShellOutput  = EtherShellCmdP.ShellOutput;
 }

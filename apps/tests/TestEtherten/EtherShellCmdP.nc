@@ -29,34 +29,82 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "ShellCommand.h"
-#include "Atm328pSpi.h"
-
-configuration TestEthertenC
+#include "w5100.h"
+module EtherShellCmdP
 {
+  provides interface ShellExecute;
+  uses interface ShellOutput;
+  uses interface EtherAddress;
+  uses interface VariantPool as Scratch;
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+  static char *buf = 0;
 
+#define PRINT_BUF_SZ 19   /* xx:xx:xx:xx:xx:xx\r\n */
 
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
+  error_t do_get (void)
+  {
+    int i;
+    mac_addr_t mac;
+    char *p;
+    error_t res = call EtherAddress.getAddress (&mac);
+    if (res != SUCCESS)
+      return res;
 
-  components SpiShellCmdC, GpioShellCmdC;
-  components new ResourceShellCmdC() as SpiResourceShellCmdC, PlatformSpiC;
-  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(SPI_RESOURCE)];
+    p = buf = call Scratch.alloc (PRINT_BUF_SZ);
+    if (!buf)
+      return ENOMEM;
 
-  WIRE_SHELL_COMMAND("spi",    SpiShellCmdC,         SerialShell);
-  WIRE_SHELL_COMMAND("gpio",   GpioShellCmdC,        SerialShell);
-  WIRE_SHELL_COMMAND("spibus", SpiResourceShellCmdC, SerialShell);
+    for (i = 0; i < sizeof (mac); ++i)
+    {
+      if (i)
+        *p++ = ':';
+      p += sprintf (p, "%02x", mac.s_addr8[i]);
+    }
+    *p++ = '\r';
+    *p++ = '\n';
 
-  components IPv4NetworkShellCmdC, IPv4NetworkC;
-  IPv4NetworkShellCmdC.IPv4Network -> IPv4NetworkC;
-  WIRE_SHELL_COMMAND("ip", IPv4NetworkShellCmdC, SerialShell);
+    res = call ShellOutput.output (buf, PRINT_BUF_SZ);
+    if (res != SUCCESS)
+    {
+      call Scratch.release (buf);
+      buf = 0;
+    }
+    return res;
+  }
 
-  components EtherShellCmdC;
-  WIRE_SHELL_COMMAND("ether", EtherShellCmdC, SerialShell);
+  error_t do_set (const char *arg)
+  {
+    unsigned a, b, c, d, e, f;
+    if (sscanf (arg, "%x:%x:%x:%x:%x:%x", &a, &b, &c, &d, &e, &f) != 6)
+      return EINVAL;
+    {
+      mac_addr_t mac = { { a, b, c, d, e, f } };
+      error_t res = call EtherAddress.setAddress (mac);
+      if (res == SUCCESS)
+        signal ShellExecute.executeDone (SUCCESS);
+    }
+    return SUCCESS;
+  }
+
+  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  {
+    if (buf)
+      return EBUSY;
+
+    if (argc > 1)
+      return do_set (argv[1]);
+    else
+      return do_get ();
+  }
+
+  command void ShellExecute.abort () {}
+
+  event void ShellOutput.outputDone ()
+  {
+    call Scratch.release (buf);
+    buf = 0;
+    signal ShellExecute.executeDone (SUCCESS);
+  }
 }
