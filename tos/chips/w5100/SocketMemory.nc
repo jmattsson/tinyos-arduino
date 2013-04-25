@@ -51,6 +51,15 @@ interface SocketMemory
   command bool rx (uint8_t socket, uint8_t *dst, uint16_t offs, uint16_t len);
 
   /**
+   * Advances the read position of the socket memory.
+   *
+   * @param socket The socket number to advance the read position for (0-3).
+   * @param len The number of bytes to advance it by.
+   * @return True if the operation succeeded, false if not.
+   */
+  command bool advanceRx (uint8_t socket, uint16_t len);
+
+  /**
    * Writes socket memory.
    * Automatically appends to the TX memory of the specified socket, and
    * updates the write position register.

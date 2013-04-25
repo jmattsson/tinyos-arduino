@@ -64,4 +64,11 @@ typedef struct
 } mac_addr_t;
 
 
+typedef struct in_iovec
+{
+  void *data;
+  uint16_t len;
+  struct in_iovec *next;
+} in_iovec;
+
 #endif

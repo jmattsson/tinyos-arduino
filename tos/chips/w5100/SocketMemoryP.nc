@@ -108,6 +108,20 @@ implementation
     return TRUE;
   }
 
+
+  command bool SocketMemory.advanceRx (uint8_t socket, uint16_t len)
+  {
+    uint16_t start;
+    mem_area_t mem = socket_mem (socket, FALSE);
+    if (mem.begin >= RX_MEM_END)
+      return FALSE;
+
+    start = reg_read16 (SOCKET_x_REG(socket, W5100_Sn_RX_RD0));
+    reg_write16 (SOCKET_x_REG(socket, W5100_Sn_RX_RD0), (start + len) & mem.mask);
+    return TRUE;
+  }
+
+
   command bool SocketMemory.tx (uint8_t socket, uint8_t *src, uint16_t len)
   {
     uint16_t offs;

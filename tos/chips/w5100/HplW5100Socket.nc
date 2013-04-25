@@ -112,12 +112,23 @@ interface HplW5100Socket
    */
   async command void executeCommand (uint8_t code);
 
+  /**
+   * @returns True if there is no command currently executing.
+   */
+  async command bool commandDone ();
 
   /**
    * @returns the current interrupt flags.
    */
   async command uint8_t getInterruptFlags ();
 
+  /**
+   * Controls whether the socket-specific interrupts are enabled.
+   *
+   * @param enable True to enable interrupts for this socket, false
+   *   to disable.
+   */
+  async command void enableInterrupt (bool enable);
  
   /**
    * @returns the current socket status.
