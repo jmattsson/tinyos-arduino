@@ -29,38 +29,78 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include "ShellCommand.h"
-#include "Atm328pSpi.h"
-
-configuration TestEthertenC
+#include "w5100.h"
+module IPv4UdpEchoShellCmdC
 {
+  provides interface ShellExecute;
+  uses interface ShellOutput;
+  uses interface IPv4UdpSocket as Socket;
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
+
+#define ECHO_PORT 7
+#define MAX_ECHO_SIZE 128
+
+  uint16_t pkt_len = 0;
+
+  task void echo ();
+
+  command error_t ShellExecute.execute (uint8_t argc, const char *argv[])
+  {
+    error_t res = call Socket.bind (ECHO_PORT);
+    if (res == SUCCESS)
+      signal ShellExecute.executeDone (SUCCESS);
+    return res;
+  }
+
+  command void ShellExecute.abort () {}
+
+  event void ShellOutput.outputDone () {}
 
 
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
+  async event void Socket.msg (uint16_t len)
+  {
+    if (!pkt_len)
+    {
+      pkt_len = len;
+//      post echo ();
+    }
+  }
 
-  components SpiShellCmdC, GpioShellCmdC;
-  components new ResourceShellCmdC() as SpiResourceShellCmdC, PlatformSpiC;
-  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(SPI_RESOURCE)];
+  task void echo ()
+  {
+    in_addr_t peer_ip;
+    in_port_t peer_port;
+    uint16_t len;
+    uint8_t data[MAX_ECHO_SIZE];
+    uint16_t data_len;
+    error_t res;
 
-  WIRE_SHELL_COMMAND("spi",    SpiShellCmdC,         SerialShell);
-  WIRE_SHELL_COMMAND("gpio",   GpioShellCmdC,        SerialShell);
-  WIRE_SHELL_COMMAND("spibus", SpiResourceShellCmdC, SerialShell);
+    atomic len = pkt_len;
 
-  components IPv4NetworkShellCmdC, IPv4NetworkC;
-  IPv4NetworkShellCmdC.IPv4Network -> IPv4NetworkC;
-  WIRE_SHELL_COMMAND("ip", IPv4NetworkShellCmdC, SerialShell);
+    call ShellOutput.output ("pkt!\n", 5);
 
-  components IPv4UdpEchoShellCmdC, new IPv4UdpSocketC () as Socket;
-  IPv4UdpEchoShellCmdC.Socket -> Socket;
-  WIRE_SHELL_COMMAND("udpecho", IPv4UdpEchoShellCmdC, SerialShell);
+    res = call Socket.peek (&peer_ip, 0, 4);
+    if (res != SUCCESS)
+      goto out;
 
-  components EtherShellCmdC;
-  WIRE_SHELL_COMMAND("ether", EtherShellCmdC, SerialShell);
+    res = call Socket.peek (&peer_port, 4, 2);
+    if (res != SUCCESS)
+      goto out;
+
+    // Note: ignoring the len field - already know the total pkt length
+    data_len = len - 8;
+    if (data_len > MAX_ECHO_SIZE)
+      data_len = MAX_ECHO_SIZE;
+
+    res = call Socket.peek (&data, 8, data_len);
+    if (res != SUCCESS)
+      goto out;
+
+    res = call Socket.sendto (peer_ip, peer_port, data, data_len);
+out:
+    call Socket.skip (len);
+    atomic pkt_len = 0;
+  }
 }

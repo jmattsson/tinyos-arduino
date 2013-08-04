@@ -32,9 +32,11 @@
 #include "Atm328pSpi.h"
 configuration EthernetC
 {
-  // TODO: more provides
   provides interface EtherAddress;
   provides interface Resource as EthernetChip;
+
+  provides interface HplW5100Socket as HplSocket[uint8_t sock_no];
+  provides interface SocketMemory;
 }
 implementation
 {
@@ -43,16 +45,21 @@ implementation
   components PlatformP, PlatformSpiC, HwW5100SpiC, ArduinoPinsC,
     new Atm328pGpioInterruptC() as IrqC, HplAtm328pExtInterruptC as HplExtIrqC;
 
-  IrqC.HplAtm328pIoInterrupt -> HplExtIrqC.Int0; // FIXME - verify
+  IrqC.HplAtm328pIoInterrupt -> HplExtIrqC.Int0;
 
   HwW5100SpiC.FastSpiByte    -> PlatformSpiC;
   HwW5100SpiC.SS             -> ArduinoPinsC.Digital[10];
   HwW5100SpiC.GpioInterrupt  -> IrqC;
 
-  components HplW5100C, SocketMemoryP;
-  HplW5100C.Hw      -> HwW5100SpiC;
-  SocketMemoryP.Hpl -> HplW5100C;
-  SocketMemoryP.Hw  -> HwW5100SpiC;
+  components HplW5100C, HplW5100SocketC, SocketMemoryP;
+  HplW5100C.Hw        -> HwW5100SpiC;
+  HplW5100SocketC.Hw  -> HwW5100SpiC;
+  HplW5100SocketC.Hpl -> HplW5100C;
+  SocketMemoryP.Hw    -> HwW5100SpiC;
+  SocketMemoryP.Hpl   -> HplW5100C;
+
+  HplSocket = HplW5100SocketC;
+  SocketMemory = SocketMemoryP;
 
   EthernetChip = PlatformSpiC.Resource[SPI_CLIENT_ID];
 

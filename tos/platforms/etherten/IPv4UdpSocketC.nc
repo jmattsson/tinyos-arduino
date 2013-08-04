@@ -30,37 +30,15 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ShellCommand.h"
-#include "Atm328pSpi.h"
-
-configuration TestEthertenC
+generic configuration IPv4UdpSocketC ()
 {
+   provides interface IPv4UdpSocket;
 }
 implementation
 {
-  // Pre-configured serial commands
-  components HelpSerialCmdC, UptimeSerialCmdC;
-
-
-  // Custom commands with hand-wiring. Note naming of PlatformSerialShellC.
-  components PlatformSerialShellC as SerialShell;
-
-  components SpiShellCmdC, GpioShellCmdC;
-  components new ResourceShellCmdC() as SpiResourceShellCmdC, PlatformSpiC;
-  SpiResourceShellCmdC.Resource -> PlatformSpiC.Resource[unique(SPI_RESOURCE)];
-
-  WIRE_SHELL_COMMAND("spi",    SpiShellCmdC,         SerialShell);
-  WIRE_SHELL_COMMAND("gpio",   GpioShellCmdC,        SerialShell);
-  WIRE_SHELL_COMMAND("spibus", SpiResourceShellCmdC, SerialShell);
-
-  components IPv4NetworkShellCmdC, IPv4NetworkC;
-  IPv4NetworkShellCmdC.IPv4Network -> IPv4NetworkC;
-  WIRE_SHELL_COMMAND("ip", IPv4NetworkShellCmdC, SerialShell);
-
-  components IPv4UdpEchoShellCmdC, new IPv4UdpSocketC () as Socket;
-  IPv4UdpEchoShellCmdC.Socket -> Socket;
-  WIRE_SHELL_COMMAND("udpecho", IPv4UdpEchoShellCmdC, SerialShell);
-
-  components EtherShellCmdC;
-  WIRE_SHELL_COMMAND("ether", EtherShellCmdC, SerialShell);
+  components IPv4UdpSocketP;
+  enum { uq_sock = unique ("UdpSocket") };
+  // Allocate UDP sockets from the top down, to leave socket #0 free as long
+  // as possible, as it has additional protocol support.
+  IPv4UdpSocket = IPv4UdpSocketP.IPv4UdpSocket[3 - uq_sock];
 }

@@ -40,7 +40,7 @@ module IPv4UdpSocketImplP
   {
     interface HplW5100Socket[uint8_t sock_no];
     interface SocketMemory;
-    interface Resource as Bus;
+    interface Resource;
   }
 }
 implementation
@@ -53,12 +53,12 @@ implementation
   error_t claim (resource_t *r)
   {
     error_t res = SUCCESS;
-    bool pre_owned = call Bus.isOwner ();
+    bool pre_owned = call Resource.isOwner ();
     if (pre_owned)
       r->ours = FALSE;
     else
     {
-      res = call Bus.immediateRequest ();
+      res = call Resource.immediateRequest ();
       r->ours = (res == SUCCESS);
     }
     return res;
@@ -67,7 +67,7 @@ implementation
   void release (resource_t *r)
   {
     if (r->ours)
-      call Bus.release ();
+      call Resource.release ();
     r->ours = FALSE;
   }
 
@@ -105,7 +105,7 @@ implementation
       call HplW5100Socket.executeCommand[sock_no] (W5100_Sn_CR_OPEN);
       res = (call HplW5100Socket.getStatus[sock_no] () == W5100_Sn_SR_SOCK_UDP)
         ? SUCCESS : FAIL;
-      call HplW5100Socket.enableInterrupt[sock_no] (TRUE);
+      call HplW5100Socket.enableInterrupt[sock_no] (res == SUCCESS);
       release (&r);
     }
     return res;
@@ -181,5 +181,7 @@ implementation
     }
   }
 
-  event void Bus.granted () {}
+  event void Resource.granted () {}
+
+  default async event void IPv4UdpSocket.msg[uint8_t sock_no] (uint16_t len) {}
 }

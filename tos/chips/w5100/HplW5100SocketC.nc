@@ -39,7 +39,7 @@ module HplW5100SocketC
   uses
   {
     interface HwW5100 as Hw;
-    interface HplW5100; // for interrupt
+    interface HplW5100 as Hpl; // for interrupt
   }
 }
 implementation
@@ -363,11 +363,11 @@ implementation
   }
 
 
-  async event void HplW5100.interrupt ()
+  async event void Hpl.interrupt ()
   {
     atomic
     {
-      uint8_t flags = call HplW5100.getInterruptFlags ();
+      uint8_t flags = call Hpl.getInterruptFlags ();
       uint8_t sock_no;
       for (sock_no = 0; sock_no < 4; ++sock_no)
       {
